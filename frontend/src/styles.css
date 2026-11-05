@@ -1,0 +1,588 @@
+/* 
+ * Ocean Quest Chronicles - Global Ocean Design System (Enhanced Polish)
+ * Palette: Ocean Gradient (#1fa8dc -> #167dae -> #0d547f -> #072a49), Coral Accent (#ff7b54 -> #ff5238)
+ * Typography: Fredoka + Nunito fonts, pill buttons, frosted glassmorphism containers
+ */
+
+:root {
+  --font-family: 'Fredoka', 'Nunito', system-ui, -apple-system, sans-serif;
+  --font-body: 'Nunito', 'Fredoka', system-ui, -apple-system, sans-serif;
+  
+  /* Ocean Palette */
+  --ocean-top: #1ca7d8;
+  --ocean-mid: #1475a3;
+  --ocean-deep: #0d517c;
+  --ocean-abyss: #062b4c;
+  --bg-gradient: linear-gradient(180deg, #1db8ef 0%, #1580b5 22%, #0e5a88 50%, #083660 75%, #041e39 100%);
+  
+  /* Coral Buttons & Accents */
+  --coral-primary: #ff7b54;
+  --coral-deep: #ff5238;
+  --coral-gradient: linear-gradient(145deg, #ff8c69 0%, #ff5238 100%);
+  --coral-hover: linear-gradient(145deg, #ff9e7a 0%, #ff6a4e 100%);
+  --coral-shadow: 0 8px 24px rgba(255, 90, 60, 0.48);
+  
+  /* Neutral / White Buttons */
+  --btn-white-bg: #ffffff;
+  --btn-white-text: #083354;
+  --btn-white-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  
+  /* Frosted Glassmorphism Panel */
+  --glass-bg: rgba(10, 68, 102, 0.58);
+  --glass-bg-hover: rgba(14, 80, 120, 0.70);
+  --glass-border: rgba(255, 255, 255, 0.24);
+  --glass-border-bright: rgba(255, 255, 255, 0.42);
+  --glass-shadow: 0 24px 60px rgba(2, 14, 32, 0.65), 0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  
+  /* Text Accents */
+  --text-white: #ffffff;
+  --text-cyan-light: #c2e8fa;
+  --text-cyan-subtle: #8ecae6;
+  --text-gold: #ffbe3b;
+  --text-danger: #ff4757;
+  
+  /* Border Radii */
+  --pill-radius: 9999px;
+  --card-radius: 28px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100%;
+  width: 100%;
+  background: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-white);
+  font-family: var(--font-family);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   Global Ambient Floating Underwater Bubbles & Plankton
+   ========================================================================== */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    radial-gradient(circle, rgba(56, 189, 248, 0.08) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px, 90px 90px;
+  background-position: 0 0, 30px 30px;
+  animation: planktonDrift 28s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes planktonDrift {
+  0% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-18px) translateX(8px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+
+/* Rising Atmospheric Bubbles Container */
+.ambient-bubbles-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ambient-bubble {
+  position: absolute;
+  bottom: -40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.75), rgba(56, 189, 248, 0.25) 55%, rgba(14, 165, 233, 0.08) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25), inset 0 -2px 4px rgba(255, 255, 255, 0.3);
+  animation: floatBubbleUp linear infinite;
+}
+
+.ambient-bubble:nth-child(1) { left: 8%; width: 14px; height: 14px; animation-duration: 9s; animation-delay: 0s; }
+.ambient-bubble:nth-child(2) { left: 18%; width: 22px; height: 22px; animation-duration: 13s; animation-delay: 2.5s; }
+.ambient-bubble:nth-child(3) { left: 28%; width: 10px; height: 10px; animation-duration: 8s; animation-delay: 1.2s; }
+.ambient-bubble:nth-child(4) { left: 42%; width: 26px; height: 26px; animation-duration: 15s; animation-delay: 4s; }
+.ambient-bubble:nth-child(5) { left: 56%; width: 16px; height: 16px; animation-duration: 11s; animation-delay: 0.8s; }
+.ambient-bubble:nth-child(6) { left: 68%; width: 30px; height: 30px; animation-duration: 17s; animation-delay: 3.2s; }
+.ambient-bubble:nth-child(7) { left: 78%; width: 12px; height: 12px; animation-duration: 10s; animation-delay: 5s; }
+.ambient-bubble:nth-child(8) { left: 88%; width: 20px; height: 20px; animation-duration: 12s; animation-delay: 1.8s; }
+.ambient-bubble:nth-child(9) { left: 94%; width: 15px; height: 15px; animation-duration: 14s; animation-delay: 6s; }
+
+@keyframes floatBubbleUp {
+  0% {
+    transform: translateY(0) translateX(0) scale(0.9);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-55vh) translateX(18px) scale(1);
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-110vh) translateX(-14px) scale(1.1);
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
+   Wave Graphic Layers at the Bottom (Signature Sea Aesthetic from PDF)
+   ========================================================================== */
+.ocean-waves-bg {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 180px;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.ocean-wave {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background-repeat: repeat-x;
+}
+
+.ocean-wave.wave-1 {
+  opacity: 0.45;
+  animation: oceanWaveAnim 24s linear infinite alternate;
+}
+
+.ocean-wave.wave-2 {
+  opacity: 0.65;
+  bottom: -15px;
+  animation: oceanWaveAnim 16s linear infinite alternate-reverse;
+}
+
+.ocean-wave.wave-3 {
+  opacity: 0.95;
+  bottom: -30px;
+  animation: oceanWaveAnim 10s linear infinite alternate;
+}
+
+@keyframes oceanWaveAnim {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ==========================================================================
+   Glassmorphic Oceanic Containers (Matching PDF Wireframe Cards) — Enhanced
+   ========================================================================== */
+.ocean-screen-layout {
+  position: relative;
+  z-index: 2;
+  min-height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem 4rem 1rem;
+}
+
+.ocean-glass-card {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  border: 1.5px solid var(--glass-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--glass-shadow);
+  padding: 2.4rem 2.8rem;
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  color: var(--text-white);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  /* Subtle top-highlight shimmer */
+  background-image: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(255, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+}
+
+.ocean-glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  border-radius: var(--card-radius) var(--card-radius) 0 0;
+}
+
+.ocean-glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 32px 70px rgba(2, 14, 32, 0.75), 0 12px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.ocean-glass-card.wide {
+  max-width: 580px;
+}
+
+.ocean-glass-card.extra-wide {
+  max-width: 720px;
+}
+
+/* Card Logo */
+.card-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
+
+.card-logo {
+  height: 95px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 12px rgba(56, 189, 248, 0.3));
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+}
+
+.card-logo:hover {
+  transform: scale(1.06) translateY(-2px);
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.55)) drop-shadow(0 0 20px rgba(56, 189, 248, 0.55));
+}
+
+/* Card Title */
+.card-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-white);
+  margin-bottom: 0.5rem;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.45), 0 0 24px rgba(56, 189, 248, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.card-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text-cyan-light);
+  line-height: 1.5;
+  margin-bottom: 1.4rem;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   Pill Buttons — Enhanced with deeper glow, richer depth
+   ========================================================================== */
+.btn-pill {
+  font-family: var(--font-family);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0.9rem 2.4rem;
+  border-radius: var(--pill-radius);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer sweep on hover */
+.btn-pill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  transform: skewX(-15deg);
+  transition: left 0.45s ease;
+}
+
+.btn-pill:hover::after {
+  left: 135%;
+}
+
+.btn-pill:focus-visible {
+  outline: 3px solid var(--coral-primary);
+  outline-offset: 3px;
+}
+
+.btn-pill:active {
+  transform: translateY(2px) scale(0.97);
+}
+
+/* Coral Primary Button */
+.btn-coral {
+  background: var(--coral-gradient);
+  color: #ffffff;
+  box-shadow: var(--coral-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 140, 100, 0.3);
+}
+
+.btn-coral:hover {
+  background: var(--coral-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(255, 90, 60, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+/* White Secondary Button */
+.btn-white {
+  background: linear-gradient(145deg, #ffffff 0%, #f0f9ff 100%);
+  color: var(--btn-white-text);
+  box-shadow: var(--btn-white-shadow), inset 0 1px 0 rgba(255, 255, 255, 1);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.btn-white:hover {
+  background: linear-gradient(145deg, #f8feff 0%, #e0f4ff 100%);
+  color: #052640;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* Ice Translucent Pill Button */
+.btn-ice {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.btn-ice:hover {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+}
+
+/* Button Stacks */
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: 100%;
+}
+
+.btn-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.btn-row .btn-pill {
+  flex: 1;
+}
+
+/* ==========================================================================
+   Pill Input Fields — Enhanced glow and depth
+   ========================================================================== */
+.field-pill {
+  font-family: var(--font-family);
+  background: rgba(255, 255, 255, 0.97);
+  color: #072a49;
+  border: 2px solid transparent;
+  border-radius: var(--pill-radius);
+  padding: 0.9rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  width: 100%;
+  text-align: center;
+  outline: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.22s ease;
+}
+
+.field-pill::placeholder {
+  color: #7d96aa;
+  font-weight: 500;
+}
+
+.field-pill:focus {
+  border-color: var(--coral-primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 123, 84, 0.22), 0 6px 18px rgba(0, 0, 0, 0.18);
+  transform: translateY(-1px);
+}
+
+.field-group {
+  margin-bottom: 0.9rem;
+  width: 100%;
+  position: relative;
+}
+
+/* ==========================================================================
+   Highlight Info Banners & Stats Tables — Enhanced polish
+   ========================================================================== */
+.highlight-pill-banner {
+  background: var(--coral-gradient);
+  color: #ffffff;
+  padding: 0.7rem 1.3rem;
+  border-radius: var(--pill-radius);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin: 1.2rem 0;
+  box-shadow: 0 6px 18px rgba(255, 82, 56, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  display: inline-block;
+  width: 100%;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.highlight-box-dashed {
+  border: 1.5px dashed rgba(255, 255, 255, 0.38);
+  background: rgba(3, 25, 43, 0.42);
+  border-radius: 16px;
+  padding: 0.9rem 1.2rem;
+  margin: 1.2rem 0;
+  text-align: center;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-cyan-light);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Key-Value Stat Grid */
+.stat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1.2rem 0;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.2s ease;
+}
+
+.stat-item:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.stat-item .stat-label {
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-cyan-light);
+}
+
+.stat-item .stat-val {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+
+.stat-item .stat-val.highlight {
+  font-size: 1.25rem;
+  color: var(--text-gold);
+  text-shadow: 0 2px 10px rgba(255, 190, 59, 0.45);
+}
+
+.star-rating {
+  font-size: 1.7rem;
+  letter-spacing: 5px;
+  color: var(--text-gold);
+  margin: 0.4rem 0 0.8rem 0;
+  filter: drop-shadow(0 2px 8px rgba(255, 190, 59, 0.5));
+  animation: starPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes starPulse {
+  0%, 100% { filter: drop-shadow(0 2px 8px rgba(255, 190, 59, 0.5)); }
+  50% { filter: drop-shadow(0 4px 18px rgba(255, 190, 59, 0.85)); }
+}
+
+/* ==========================================================================
+   Modal Overlay — Enhanced backdrop
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 12, 28, 0.82);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  padding: 1rem;
+  animation: fadeInOverlay 0.25s ease;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.88); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ==========================================================================
+   Scrollbar & Utilities
+   ========================================================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(7, 46, 79, 0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+/* ==========================================================================
+   Global Entry Animations
+   ========================================================================== */
+@keyframes slideUpFade {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUpFade 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
