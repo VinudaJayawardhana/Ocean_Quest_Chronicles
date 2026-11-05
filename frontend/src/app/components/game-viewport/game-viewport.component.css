@@ -1,0 +1,1238 @@
+/* ==========================================================================
+   Ocean Quest Chronicles - Game Viewport & HUD Styling
+   Matches Screen 5 (Swimming HUD), Screen 6 (Sonar Challenge), and Game Modals
+   ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+}
+
+.viewport-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 600px;
+  background: #021124;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Screen Shake Effect when taking damage */
+.viewport-wrapper.screen-shake {
+  animation: screenShakeAnim 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes screenShakeAnim {
+  10%, 90% { transform: translate3d(-4px, 2px, 0); }
+  20%, 80% { transform: translate3d(5px, -3px, 0); }
+  30%, 50%, 70% { transform: translate3d(-7px, 4px, 0); }
+  40%, 60% { transform: translate3d(7px, -2px, 0); }
+}
+
+/* ==========================================================================
+   Screen 5 HUD: Danger Meter, 10-Digit Score, 3 Hearts
+   ========================================================================== */
+.hud-top-bar {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  align-items: center;
+  padding: 0 1.25rem;
+  z-index: 50;
+  pointer-events: none;
+  gap: 1rem;
+}
+
+.hud-top-bar > * {
+  pointer-events: auto;
+}
+
+/* Left Group */
+.hud-left-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.danger-meter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.danger-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+.danger-track {
+  width: 210px;
+  height: 18px;
+  background: rgba(2, 14, 28, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.65);
+  border-radius: 9999px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
+}
+
+.danger-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e 0%, #38bdf8 35%, #eab308 65%, #ff5238 100%);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+  position: relative;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.danger-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, transparent 100%);
+  border-radius: 9999px 9999px 0 0;
+}
+
+.danger-fill.high-danger {
+  animation: pulseDanger 0.7s infinite alternate;
+  box-shadow: 0 0 16px rgba(255, 82, 56, 0.8);
+}
+
+@keyframes pulseDanger {
+  from { filter: brightness(1) drop-shadow(0 0 4px rgba(255, 82, 56, 0.5)); }
+  to { filter: brightness(1.35) drop-shadow(0 0 12px rgba(255, 82, 56, 0.9)); }
+}
+
+/* 10-Digit Arcade Score */
+.arcade-score-row {
+  display: flex;
+  align-items: center;
+  background: rgba(2, 16, 32, 0.6);
+  padding: 0.2rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  width: fit-content;
+}
+
+.score-digits {
+  font-family: 'Fredoka', monospace, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 12px rgba(56, 189, 248, 0.6);
+}
+
+/* 3 Hearts */
+.hearts-row {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.heart-icon {
+  font-size: 1.35rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.heart-icon.depleted {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+
+/* Center Notification Banner Pill (Screen 5) */
+.hud-center-pill {
+  justify-self: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100%;
+}
+
+.hint-pill-banner {
+  background: linear-gradient(135deg, rgba(255, 123, 84, 0.92), rgba(255, 82, 56, 0.92));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.88rem;
+  letter-spacing: 0.4px;
+  padding: 0.42rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 12px rgba(255, 123, 84, 0.25);
+  white-space: nowrap;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+/* Right Controls */
+.hud-right-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  justify-self: end;
+  flex-wrap: nowrap;
+}
+
+.hud-gauges-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Live Marine Weather & Telemetry Badge (Open-Meteo & Climate API) */
+.marine-telemetry-badge {
+  background: rgba(3, 20, 36, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  padding: 0.38rem 0.85rem;
+  border-radius: 9999px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #e0f2fe;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+}
+
+.telemetry-temp {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.telemetry-wave {
+  color: #fde047;
+}
+
+.telemetry-mode {
+  background: rgba(14, 165, 233, 0.25);
+  border: 1px solid rgba(14, 165, 233, 0.5);
+  padding: 1px 7px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  color: #bae6fd;
+}
+
+.telemetry-mode.night {
+  background: rgba(168, 85, 247, 0.3);
+  border-color: rgba(168, 85, 247, 0.6);
+  color: #e9d5ff;
+}
+
+.depth-badge {
+  background: rgba(3, 20, 36, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  padding: 0.38rem 0.85rem;
+  border-radius: 9999px;
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: #c2e8fa;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+}
+
+.hud-buttons-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(3, 20, 36, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  padding: 3px 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Night Dive Atmospheric Mode */
+.viewport-wrapper.night-dive {
+  background: #010814;
+}
+
+.viewport-wrapper.night-dive .water-light-overlay {
+  background: radial-gradient(circle at 50% 20%, rgba(15, 23, 42, 0.75) 0%, rgba(2, 6, 23, 0.95) 100%);
+}
+
+.viewport-wrapper.night-dive .bg-scene-iframe {
+  filter: brightness(0.45) contrast(1.2) hue-rotate(15deg);
+}
+
+/* Scuba Headlamp Flashlight Beam Cone */
+.flashlight-beam {
+  position: absolute;
+  top: 50%;
+  left: 65%;
+  transform: translateY(-50%);
+  width: 260px;
+  height: 120px;
+  background: radial-gradient(ellipse at left, rgba(254, 240, 138, 0.65) 0%, rgba(56, 189, 248, 0.25) 45%, transparent 75%);
+  clip-path: polygon(0% 45%, 100% 0%, 100% 100%, 0% 55%);
+  pointer-events: none;
+  z-index: 10;
+  animation: flashlightFlicker 3s infinite alternate;
+}
+
+.flashlight-beam.beam-left {
+  left: auto;
+  right: 65%;
+  transform: translateY(-50%) scaleX(-1);
+}
+
+@keyframes flashlightFlicker {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 0.7; }
+  75% { opacity: 0.95; }
+}
+
+.hud-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(14, 82, 119, 0.75);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  padding: 0;
+}
+
+.hud-icon-btn:hover {
+  background: #ff7b54;
+  border-color: #ff9d7e;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 123, 84, 0.45);
+}
+
+.hud-icon-btn.exit-btn {
+  background: rgba(220, 38, 38, 0.45);
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
+.hud-icon-btn.exit-btn:hover {
+  background: #ef4444;
+  border-color: #f87171;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.55);
+}
+
+/* ==========================================================================
+   Main Ocean Stage & Entities
+   ========================================================================== */
+.ocean-stage {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.bg-scene-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.water-light-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 20%, rgba(28, 167, 216, 0.15) 0%, rgba(3, 20, 36, 0.4) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Diver Entity */
+.diver-entity {
+  position: absolute;
+  width: 150px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 25;
+  transition: opacity 0.2s ease;
+}
+
+.diver-sprite {
+  width: 150px;
+  height: 120px;
+  background-repeat: no-repeat;
+  background-size: 1200px 120px !important; /* 8 frames * 150px */
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.45));
+}
+
+.diver-entity.invulnerable {
+  animation: flickerInvulnerable 0.2s infinite;
+}
+
+@keyframes flickerInvulnerable {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.diver-status-bubble {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(3, 20, 36, 0.85);
+  border: 1px solid #38bdf8;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* Safe Sanctuary Zone (Safe Haven where enemies turn away) */
+.safe-sanctuary-zone {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.18) 0%, rgba(2, 132, 199, 0.08) 65%, transparent 100%);
+  border: 2px dashed rgba(56, 189, 248, 0.55);
+  box-shadow: 0 0 35px rgba(56, 189, 248, 0.3), inset 0 0 25px rgba(56, 189, 248, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 12;
+  transition: all 0.3s ease;
+}
+
+.safe-sanctuary-zone.diver-inside {
+  border-color: #38bdf8;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.32) 0%, rgba(14, 165, 233, 0.15) 70%, transparent 100%);
+  box-shadow: 0 0 50px rgba(56, 189, 248, 0.6), inset 0 0 35px rgba(56, 189, 248, 0.3);
+}
+
+.sanctuary-pulse-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  animation: sanctuaryPulse 2.8s ease-out infinite;
+}
+
+@keyframes sanctuaryPulse {
+  0% { transform: scale(0.92); opacity: 0.8; }
+  100% { transform: scale(1.08); opacity: 0; }
+}
+
+.sanctuary-label {
+  position: absolute;
+  bottom: 8px;
+  background: rgba(3, 20, 36, 0.85);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(56, 189, 248, 0.5);
+  border-radius: 9999px;
+  padding: 2px 10px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #e0f2fe;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+
+/* Visible Detection Sonar Ring (Enemies only chase when diver enters this ring) */
+.detection-sonar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px dashed rgba(56, 189, 248, 0.35);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.05) 0%, transparent 75%);
+  pointer-events: none;
+  z-index: 1;
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.detection-sonar-ring.alerted {
+  border: 2px solid rgba(239, 68, 68, 0.8);
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.15) 0%, transparent 75%);
+  animation: alertSonarPulse 0.8s infinite alternate;
+}
+
+@keyframes alertSonarPulse {
+  0% { transform: translate(-50%, -50%) scale(0.97); filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.4)); }
+  100% { transform: translate(-50%, -50%) scale(1.03); filter: drop-shadow(0 0 16px rgba(239, 68, 68, 0.8)); }
+}
+
+.enemy-alert-badge {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 900;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(220, 38, 38, 0.7);
+  animation: bounceAlert 0.4s infinite alternate;
+  z-index: 25;
+}
+
+@keyframes bounceAlert {
+  from { transform: translateX(-50%) translateY(0); }
+  to { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* Shark Entity */
+.shark-entity {
+  position: absolute;
+  width: 150px;
+  height: 100px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.shark-sprite {
+  width: 150px;
+  height: 100px;
+  background-repeat: no-repeat;
+  background-size: 900px 100px !important; /* 6 frames * 150px */
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+}
+
+.hazard-threat-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120px;
+  height: 120px;
+  border: 2px dashed rgba(239, 68, 68, 0.7);
+  border-radius: 50%;
+  animation: pulseRing 0.6s infinite alternate;
+}
+
+@keyframes pulseRing {
+  from { transform: translate(-50%, -50%) scale(0.9); opacity: 0.5; }
+  to { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+}
+
+/* Pirate Entity */
+.pirate-entity {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.pirate-sprite {
+  width: 140px;
+  height: 140px;
+  background-repeat: no-repeat;
+  background-size: 1120px 140px !important; /* 8 frames * 140px */
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+}
+
+/* ─── Level 3: Octopus Entity ──────────────────────────────────────────── */
+.octopus-entity {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.octopus-sprite {
+  width: 120px;
+  height: 120px;
+  background-repeat: no-repeat;
+  background-size: 1680px 120px !important; /* 14 frames × 120px */
+  filter: drop-shadow(0 6px 14px rgba(138, 43, 226, 0.55));
+}
+
+/* ─── Level 3: Guard Entity ────────────────────────────────────────────── */
+.guard-entity {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.guard-sprite {
+  width: 120px;
+  height: 120px;
+  background-repeat: no-repeat;
+  background-size: 1800px 120px !important; /* 15 frames × 120px */
+  filter: drop-shadow(0 6px 14px rgba(150, 0, 0, 0.5));
+}
+
+/* ─── Tentacle / Guard Attack Flash FX ─────────────────────────────────── */
+.tentacle-slash-fx {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(138, 43, 226, 0.75) 0%, transparent 70%);
+  animation: tentaclePulse 0.35s ease-out forwards;
+  pointer-events: none;
+  z-index: 25;
+}
+
+@keyframes tentaclePulse {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+
+
+
+/* Oxygen Bubbles */
+.oxygen-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85), rgba(56, 189, 248, 0.4) 60%, rgba(14, 165, 233, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+
+.oxygen-bubble:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.bubble-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #032b49;
+}
+
+/* Sunken Treasure Chests */
+.sunken-chest {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.sunken-chest:hover {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.chest-icon {
+  font-size: 2.9rem;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 14px rgba(251, 191, 36, 0.45));
+  animation: chestGleam 2.8s ease-in-out infinite alternate;
+}
+
+@keyframes chestGleam {
+  0% { filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.65)) drop-shadow(0 0 10px rgba(251, 191, 36, 0.35)); }
+  100% { filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 24px rgba(251, 191, 36, 0.75)); }
+}
+
+.chest-prompt {
+  background: linear-gradient(135deg, #ff7b54 0%, #ff5238 100%);
+  color: #ffffff;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-align: center;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 12px rgba(255, 82, 56, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+  animation: floatPrompt 1.4s infinite alternate;
+}
+
+@keyframes floatPrompt {
+  from { transform: translateY(0); }
+  to { transform: translateY(-5px); }
+}
+
+/* Seabed Coral Reef (Screen 5 & 6 Floor Graphic) */
+.seabed-coral-reef {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 90px;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.coral-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.coral-plant-row {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  pointer-events: none;
+}
+
+.coral-emoji {
+  position: absolute;
+  font-size: 1.8rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* Virtual D-Pad (Screen 5 & 6) */
+.virtual-controls-wrap {
+  position: absolute;
+  bottom: 25px;
+  right: 25px;
+  z-index: 40;
+}
+
+.dpad-cross {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dpad-middle-row {
+  display: flex;
+  align-items: center;
+}
+
+.dpad-key {
+  width: 44px;
+  height: 44px;
+  background: rgba(14, 82, 119, 0.65);
+  backdrop-filter: blur(6px);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: all 0.15s ease;
+}
+
+.dpad-key:active {
+  background: #ff7b54;
+  transform: scale(0.92);
+}
+
+.dpad-hub {
+  width: 32px;
+  height: 32px;
+}
+
+/* Sector Switcher Pill */
+.sector-switcher-pill {
+  position: absolute;
+  bottom: 25px;
+  left: 25px;
+  background: rgba(3, 20, 36, 0.7);
+  backdrop-filter: blur(6px);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  padding: 0.35rem 0.6rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 40;
+}
+
+.sector-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #c2e8fa;
+  margin-left: 0.3rem;
+}
+
+.chip-sector {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip-sector.active {
+  background: #ff7b54;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(255, 123, 84, 0.4);
+}
+
+/* ==========================================================================
+   Screen 6: Sonar Challenge Frame (Warm Nautical Border Frame)
+   ========================================================================== */
+.sonar-challenge-frame {
+  background: #9a5b32;
+  border: 3.5px solid #d97706;
+  border-radius: 26px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), inset 0 2px 0 rgba(255, 255, 255, 0.25);
+  padding: 1.2rem 1.4rem;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  animation: scaleIn 0.25s ease-out;
+}
+
+.challenge-top-badge {
+  background: #d97706;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 2px;
+  padding: 0.35rem 1.5rem;
+  border-radius: 9999px;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.challenge-level-sub {
+  color: #fde68a;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  margin: 0.4rem 0 0.8rem 0;
+  text-transform: uppercase;
+}
+
+.inner-challenge-box {
+  background: #fbf3e4;
+  border-radius: 18px;
+  padding: 1.2rem;
+  color: #451a03;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.inner-header-banner {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #451a03;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+.puzzle-view-container {
+  background: #04253e;
+  border-radius: 12px;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  border: 2px solid #b45309;
+}
+
+.fish-puzzle-img {
+  max-height: 180px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+/* Phase Timer & Countdown Bar */
+.phase-timer-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+.timer-badge {
+  background: #0f766e;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.timer-badge.urgent {
+  background: #dc2626;
+  animation: urgentPulse 0.5s infinite alternate;
+}
+
+@keyframes urgentPulse {
+  from { transform: scale(1); filter: brightness(1); }
+  to { transform: scale(1.06); filter: brightness(1.25); }
+}
+
+.timer-progress-track {
+  flex: 1;
+  height: 10px;
+  background: rgba(120, 53, 15, 0.2);
+  border-radius: 9999px;
+  overflow: hidden;
+  border: 1px solid rgba(120, 53, 15, 0.3);
+}
+
+.timer-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.timer-progress-fill.phase1 {
+  background: linear-gradient(90deg, #0ea5e9, #14b8a6);
+}
+
+.timer-progress-fill.phase2 {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.phase-instruction {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #78350f;
+  margin: 0.5rem 0 0.8rem 0;
+  line-height: 1.4;
+}
+
+/* Concealed Radar Screen (Phase 2) */
+.radar-concealed-screen {
+  min-height: 160px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #063458 0%, #021626 100%);
+  border: 2px solid #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-scan-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.25) 0%, transparent 80%);
+  animation: radarSweep 1.8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes radarSweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+.radar-classified-text {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 1rem;
+}
+
+.radar-classified-text .lock-glyph {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 0.3rem;
+  filter: drop-shadow(0 2px 8px rgba(245, 158, 11, 0.6));
+}
+
+.radar-classified-text h4 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 1.5px;
+  margin: 0 0 0.25rem 0;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.4);
+}
+
+.radar-classified-text p {
+  font-size: 0.78rem;
+  color: #bae6fd;
+  margin: 0;
+}
+
+/* 3 Multiple Choice Option Oval Buttons */
+.three-options-prompt {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #78350f;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin: 0.6rem 0 0.5rem 0;
+}
+
+.three-options-grid {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+  align-items: center;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.sonar-choice-oval {
+  flex: 1;
+  max-width: 130px;
+  min-height: 68px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #9a3412 0%, #7c2d12 100%);
+  border: 2.5px solid #f59e0b;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 6px 14px rgba(124, 45, 18, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2);
+}
+
+.sonar-choice-oval:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ff7b54 0%, #ea580c 100%);
+  border-color: #ffffff;
+  transform: translateY(-3px) scale(1.06);
+  box-shadow: 0 10px 20px rgba(255, 123, 84, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.4);
+}
+
+.sonar-choice-oval:active:not(:disabled) {
+  transform: translateY(1px) scale(0.97);
+}
+
+.sonar-choice-oval.selected {
+  background: linear-gradient(180deg, #059669 0%, #047857 100%);
+  border-color: #a7f3d0;
+  box-shadow: 0 0 16px rgba(5, 150, 105, 0.6);
+}
+
+.sonar-choice-oval:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.choice-num {
+  font-family: 'Fredoka', cursive, sans-serif;
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.choice-sub {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  opacity: 0.9;
+  text-transform: uppercase;
+}
+
+.challenge-feedback {
+  margin-top: 0.8rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.challenge-feedback.success {
+  color: #15803d;
+}
+
+.challenge-feedback.error {
+  color: #b91c1c;
+}
+
+.challenge-footer {
+  margin-top: 1rem;
+}
+
+/* ==========================================================================
+   Modals Overlay
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(2, 17, 34, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1.2rem;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.modal-center-card {
+  animation: scaleIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.badge-new-record {
+  background: #ffbe3b;
+  color: #052640;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+/* Controls Guide Grid */
+.controls-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.8rem;
+  margin: 1.2rem 0;
+}
+
+.guide-box {
+  background: rgba(3, 20, 36, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 0.8rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.guide-key {
+  font-weight: 800;
+  color: #ffbe3b;
+  font-size: 0.9rem;
+}
+
+.guide-desc {
+  font-size: 0.75rem;
+  color: #c2e8fa;
+}
+
+.level-select-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 1rem 0;
+}
+
+.level-select-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #c2e8fa;
+}
+
+.level-btn-pair {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: center;
+}
+
+.level-btn-pair .btn-pill {
+  flex: 1;
+}
+
+.api-loading-banner {
+  position: absolute;
+  top: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(3, 20, 36, 0.88);
+  border: 1.5px solid #38bdf8;
+  padding: 0.6rem 1.4rem;
+  border-radius: 9999px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  z-index: 60;
+}
+
+.api-loading-banner.error-banner {
+  border-color: #ef4444;
+  color: #fca5a5;
+}
+
+.sonar-spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ff7b54;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
