@@ -1,0 +1,796 @@
+<div class="viewport-wrapper" [class.screen-shake]="gameState.screenShake" [class.night-dive]="isNightDive">
+  
+  <!-- =========================================================================
+       Screen 5 HUD: Danger Meter, 10-Digit Score, 3 Hearts, & Action Controls
+       ========================================================================= -->
+  <header class="hud-top-bar" *ngIf="gameState.isPlaying || gameState.isPaused">
+    <!-- Top-Left: Danger Meter, Score & Hearts -->
+    <div class="hud-left-group">
+      <div class="danger-meter-container">
+        <div class="danger-meter-meta">
+          <span class="danger-label">Danger meter</span>
+        </div>
+        <div class="danger-track">
+          <div 
+            class="danger-fill" 
+            [style.width.%]="dangerPercent"
+            [class.high-danger]="dangerPercent >= 70"
+          ></div>
+        </div>
+      </div>
+
+      <!-- 10-Digit Arcade Score Counter -->
+      <div class="arcade-score-row">
+        <span class="score-digits">{{ scoreFormatted }}</span>
+      </div>
+
+      <!-- Lives Hearts Display -->
+      <div class="hearts-row">
+        <span class="heart-icon" [class.depleted]="livesCount < 1">❤️</span>
+        <span class="heart-icon" [class.depleted]="livesCount < 2">❤️</span>
+        <span class="heart-icon" [class.depleted]="livesCount < 3">❤️</span>
+      </div>
+    </div>
+
+    <!-- Top-Center: Notification / Hint Pill (Screen 5) -->
+    <div class="hud-center-pill">
+      <div class="hint-pill-banner">
+        {{ hintNotificationText }}
+      </div>
+    </div>
+
+    <!-- Top-Right: Controls & Gauges -->
+    <div class="hud-right-group">
+      <div class="hud-gauges-cluster">
+        <!-- Live Marine Weather & Telemetry Badge (Open-Meteo & Climate API) -->
+        <div 
+          class="marine-telemetry-badge" 
+          [title]="currentTelemetry.climateWarning || (currentTelemetry.city + ' - ' + currentTelemetry.waterTemperature + '°C')"
+        >
+          <span class="telemetry-temp">🌡️ {{ currentTelemetry.waterTemperature }}°C</span>
+          <span class="telemetry-wave">🌊 {{ currentTelemetry.seaCondition }}</span>
+          <span class="telemetry-mode" [class.night]="isNightDive">
+            {{ isNightDive ? '🌙 Night' : '☀️ Day' }}
+          </span>
+        </div>
+
+        <div class="depth-badge">
+          <span class="depth-icon">⚓</span>
+          <span class="depth-val">{{ gameState.depth }}m</span>
+        </div>
+      </div>
+
+      <div class="hud-buttons-cluster">
+        <button 
+          type="button" 
+          class="hud-icon-btn" 
+          (click)="openSettings()" 
+          title="Game Settings"
+        >
+          ⚙
+        </button>
+
+        <button 
+          type="button" 
+          class="hud-icon-btn" 
+          (click)="toggleMute()" 
+          [title]="soundService.isMuted ? 'Unmute Audio' : 'Mute Audio'"
+        >
+          {{ soundService.isMuted ? '🔇' : '🔊' }}
+        </button>
+
+        <button 
+          type="button" 
+          class="hud-icon-btn" 
+          *ngIf="gameState.isPlaying && !gameState.isGameOver"
+          (click)="togglePause()" 
+          title="Pause Dive (P)"
+        >
+          {{ gameState.isPaused ? '▶' : '⏸' }}
+        </button>
+
+        <button 
+          type="button" 
+          class="hud-icon-btn exit-btn" 
+          (click)="goToMainMenu()" 
+          title="Exit to Main Menu"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       Main Ocean Stage (Underwater Visual World)
+       ========================================================================= -->
+  <main #oceanStage class="ocean-stage" (click)="onStageClick($event)">
+    <!-- Animated SVG Underwater Background Scene -->
+    <iframe 
+      [src]="currentBgUrl" 
+      class="bg-scene-iframe" 
+      tabindex="-1" 
+      aria-hidden="true"
+    ></iframe>
+
+    <!-- Ocean Sunbeam Lighting Overlay -->
+    <div class="water-light-overlay"></div>
+
+    <!-- Scuba Diver Bubble Trail Particles -->
+    <div 
+      *ngFor="let tb of gameState.trailBubbles" 
+      class="trail-bubble"
+      [style.left.%]="tb.x"
+      [style.top.%]="tb.y"
+      [style.opacity]="1 - (tb.life / tb.maxLife)"
+    ></div>
+
+    <!-- Diver (Player Sprite) -->
+    <div 
+      *ngIf="gameState.isPlaying || gameState.isGameOver"
+      class="diver-entity"
+      [style.left.%]="gameState.diver.x"
+      [style.top.%]="gameState.diver.y"
+      [style.transform]="getDiverTransform()"
+      [class.invulnerable]="gameState.diver.invulnerableTime > 0"
+      [class.state-hurt]="gameState.diver.state === 'hurt'"
+      [class.state-scared]="gameState.diver.state === 'scared'"
+      [class.state-celebrate]="gameState.diver.state === 'celebrate'"
+    >
+      <!-- Night Dive Scuba Headlamp Flashlight Beam -->
+      <div 
+        *ngIf="isNightDive" 
+        class="flashlight-beam" 
+        [class.beam-left]="gameState.diver.facing === 'left'"
+      ></div>
+
+      <div 
+        class="diver-sprite"
+        [style.background-image]="'url(' + getDiverSpriteSheetUrl() + ')'"
+        [style.background-position]="getDiverSpritePosition()"
+      ></div>
+
+      <!-- Emotional Status Bubble -->
+      <div class="diver-status-bubble" *ngIf="gameState.diver.state !== 'swim' && gameState.diver.state !== 'idle'">
+        <span *ngIf="gameState.diver.state === 'scared'">⚠️ Hazard!</span>
+        <span *ngIf="gameState.diver.state === 'hurt'">💥 Damaged!</span>
+        <span *ngIf="gameState.diver.state === 'celebrate'">🎉 Decrypted!</span>
+        <span *ngIf="gameState.diver.state === 'defeated'">💀 Sinking...</span>
+      </div>
+    </div>
+
+    <!-- Safe Haven Sanctuaries (Predators Cannot Enter / Turn Away) -->
+    <div 
+      *ngFor="let zone of gameState.safeZones"
+      class="safe-sanctuary-zone"
+      [style.left.%]="zone.x"
+      [style.top.%]="zone.y"
+      [style.width.%]="zone.radius * 2"
+      [style.height.%]="zone.radius * 2"
+      [class.diver-inside]="gameState.isDiverInSafeZone"
+    >
+      <div class="sanctuary-pulse-ring"></div>
+      <div class="sanctuary-label">
+        <span>🛡️ {{ zone.name }}</span>
+      </div>
+    </div>
+
+    <!-- Sharks (Hazards in Level 1 & Level 3 with Visible Detection Rings) -->
+    <ng-container *ngIf="(gameState.level === 1 || gameState.level === 3) && (gameState.isPlaying || gameState.isGameOver)">
+      <div 
+        *ngFor="let shark of gameState.sharks"
+        class="shark-entity"
+        [style.left.%]="shark.x"
+        [style.top.%]="shark.y"
+      >
+        <!-- Visible Detection Radius Ring -->
+        <div 
+          class="detection-sonar-ring" 
+          [class.alerted]="shark.isChasing"
+          [style.width.px]="shark.detectionRadius * 14"
+          [style.height.px]="shark.detectionRadius * 14"
+        ></div>
+
+        <!-- Alert Exclamation when chasing -->
+        <div class="enemy-alert-badge" *ngIf="shark.isChasing">
+          <span>❗</span>
+        </div>
+
+        <div 
+          class="shark-sprite"
+          [style.background-image]="'url(' + getSharkSpriteSheetUrl(shark) + ')'"
+          [style.background-position]="getSharkSpritePosition(shark)"
+        ></div>
+        <div class="hazard-threat-ring" *ngIf="shark.state === 'bite'"></div>
+      </div>
+    </ng-container>
+
+    <!-- Pirates (Hazards in Level 2 with Visible Detection Rings) -->
+    <ng-container *ngIf="gameState.level === 2 && (gameState.isPlaying || gameState.isGameOver)">
+      <div 
+        *ngFor="let pirate of gameState.pirates"
+        class="pirate-entity"
+        [style.left.%]="pirate.x"
+        [style.top.%]="pirate.y"
+      >
+        <!-- Visible Detection Radius Ring -->
+        <div 
+          class="detection-sonar-ring pirate-ring" 
+          [class.alerted]="pirate.isChasing"
+          [style.width.px]="pirate.detectionRadius * 14"
+          [style.height.px]="pirate.detectionRadius * 14"
+        ></div>
+
+        <!-- Alert Exclamation when chasing -->
+        <div class="enemy-alert-badge" *ngIf="pirate.isChasing">
+          <span>⚔️</span>
+        </div>
+
+        <div 
+          class="pirate-sprite"
+          [style.background-image]="'url(' + getPirateSpriteSheetUrl(pirate) + ')'"
+          [style.background-position]="getPirateSpritePosition(pirate)"
+        ></div>
+        <div class="sword-slash-fx" *ngIf="pirate.state === 'attack'"></div>
+      </div>
+    </ng-container>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Level 3 – Abyss Trench: Octopus (Protects Mystery Box)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="gameState.level === 3 && (gameState.isPlaying || gameState.isGameOver)">
+      <div
+        *ngFor="let octopus of gameState.octopuses"
+        class="octopus-entity"
+        [style.left.%]="octopus.x"
+        [style.top.%]="octopus.y"
+      >
+        <div class="detection-sonar-ring pirate-ring"
+             [class.alerted]="octopus.isChasing"
+             [style.width.px]="octopus.detectionRadius * 14"
+             [style.height.px]="octopus.detectionRadius * 14"></div>
+        <div class="enemy-alert-badge" *ngIf="octopus.isChasing"><span>🐙</span></div>
+        <div class="octopus-sprite"
+             [style.background-image]="'url(' + getOctopusSpriteSheetUrl(octopus) + ')'"
+             [style.background-position]="getOctopusSpritePosition(octopus)"></div>
+        <div class="tentacle-slash-fx" *ngIf="octopus.state === 'attack'"></div>
+      </div>
+    </ng-container>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Level 3 – Abyss Trench: Guards (Protects Mystery Box)
+         ═══════════════════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="gameState.level === 3 && (gameState.isPlaying || gameState.isGameOver)">
+      <div
+        *ngFor="let guard of gameState.guards"
+        class="guard-entity"
+        [style.left.%]="guard.x"
+        [style.top.%]="guard.y"
+      >
+        <div class="detection-sonar-ring pirate-ring"
+             [class.alerted]="guard.isChasing"
+             [style.width.px]="guard.detectionRadius * 14"
+             [style.height.px]="guard.detectionRadius * 14"></div>
+        <div class="enemy-alert-badge" *ngIf="guard.isChasing"><span>⚔️</span></div>
+        <div class="guard-sprite"
+             [style.background-image]="'url(' + getGuardSpriteSheetUrl(guard) + ')'"
+             [style.background-position]="getGuardSpritePosition(guard)"></div>
+        <div class="tentacle-slash-fx" *ngIf="guard.state === 'attack'"></div>
+      </div>
+    </ng-container>
+
+
+    <div 
+      *ngFor="let bubble of gameState.bubbles"
+      class="oxygen-bubble"
+      [style.left.%]="bubble.x"
+      [style.top.%]="bubble.y"
+      [style.width.px]="bubble.size"
+      [style.height.px]="bubble.size"
+      (click)="$event.stopPropagation(); gameEngine.addOxygen(15)"
+      title="Catch bubble (+15% Oxygen)"
+    >
+      <div class="bubble-gloss"></div>
+      <span class="bubble-tag">+O₂</span>
+    </div>
+
+    <!-- Sunken Treasure Mystery Box (Randomized Position) -->
+    <div 
+      *ngFor="let chest of gameState.chests"
+      class="sunken-chest"
+      [class.opened]="chest.opened"
+      [class.highlight]="chest.nearPlayer && !chest.opened"
+      [style.left.%]="chest.x"
+      [style.top.%]="chest.y"
+      (click)="$event.stopPropagation(); openChestPuzzle(chest.id)"
+    >
+      <div class="chest-icon">
+        {{ chest.opened ? '🔓' : '📦' }}
+      </div>
+      <div class="chest-prompt" *ngIf="chest.nearPlayer && !chest.opened">
+        <span>Press [E] or Click</span>
+        <small>Sonar Challenge</small>
+      </div>
+      <div class="chest-sparkles" *ngIf="!chest.opened"></div>
+    </div>
+
+    <!-- Coral Reef Sea Floor Decorative Layer (Screen 5) -->
+    <div class="seabed-coral-reef">
+      <svg viewBox="0 0 1200 120" preserveAspectRatio="none" class="coral-svg">
+        <path d="M0,120 L0,70 Q30,45 60,75 Q90,30 120,65 Q150,50 180,80 Q220,35 250,70 Q280,40 310,85 Q350,30 380,75 Q410,45 440,70 Q480,25 510,75 Q540,55 570,85 Q610,35 640,70 Q670,40 700,80 Q740,25 770,75 Q800,50 830,70 Q870,30 900,80 Q930,40 960,70 Q1000,20 1030,75 Q1060,50 1090,80 Q1130,30 1160,75 Q1180,55 1200,80 L1200,120 Z" fill="#b45309" opacity="0.6"/>
+        <path d="M0,120 L0,85 Q40,55 80,85 Q130,40 170,85 Q210,60 250,90 Q300,45 340,85 Q390,55 430,90 Q480,40 520,85 Q570,60 610,90 Q660,45 700,85 Q750,55 790,90 Q840,40 880,85 Q930,60 970,90 Q1020,45 1060,85 Q1110,55 1150,90 L1200,85 L1200,120 Z" fill="#042f2e" opacity="0.8"/>
+      </svg>
+      <div class="coral-plant-row">
+        <span class="coral-emoji" style="left: 5%;">🪸</span>
+        <span class="coral-emoji" style="left: 15%;">🌾</span>
+        <span class="coral-emoji" style="left: 28%;">🪸</span>
+        <span class="coral-emoji" style="left: 42%;">🌾</span>
+        <span class="coral-emoji" style="left: 58%;">🪸</span>
+        <span class="coral-emoji" style="left: 72%;">🌾</span>
+        <span class="coral-emoji" style="left: 88%;">🪸</span>
+      </div>
+    </div>
+
+    <!-- Virtual D-Pad (Screen 5 & 6) -->
+    <div class="virtual-controls-wrap" *ngIf="gameState.isPlaying && !currentPuzzle && !gameState.isGameOver">
+      <div class="dpad-cross">
+        <button 
+          type="button"
+          class="dpad-key key-up" 
+          (mousedown)="onDirectionButtonDown('up')"
+          (mouseup)="onDirectionButtonUp('up')"
+          (touchstart)="onDirectionButtonDown('up'); $event.preventDefault()"
+          (touchend)="onDirectionButtonUp('up'); $event.preventDefault()"
+        >▲</button>
+        <div class="dpad-middle-row">
+          <button 
+            type="button"
+            class="dpad-key key-left" 
+            (mousedown)="onDirectionButtonDown('left')"
+            (mouseup)="onDirectionButtonUp('left')"
+            (touchstart)="onDirectionButtonDown('left'); $event.preventDefault()"
+            (touchend)="onDirectionButtonUp('left'); $event.preventDefault()"
+          >◀</button>
+          <div class="dpad-hub"></div>
+          <button 
+            type="button"
+            class="dpad-key key-right" 
+            (mousedown)="onDirectionButtonDown('right')"
+            (mouseup)="onDirectionButtonUp('right')"
+            (touchstart)="onDirectionButtonDown('right'); $event.preventDefault()"
+            (touchend)="onDirectionButtonUp('right'); $event.preventDefault()"
+          >▶</button>
+        </div>
+        <button 
+          type="button"
+          class="dpad-key key-down" 
+          (mousedown)="onDirectionButtonDown('down')"
+          (mouseup)="onDirectionButtonUp('down')"
+          (touchstart)="onDirectionButtonDown('down'); $event.preventDefault()"
+          (touchend)="onDirectionButtonUp('down'); $event.preventDefault()"
+        >▼</button>
+      </div>
+    </div>
+
+    <!-- API Loading Indicator -->
+    <div class="api-loading-banner" *ngIf="puzzleLoading">
+      <div class="sonar-spinner"></div>
+      <p>Receiving sonar transmission from Fish Game API...</p>
+    </div>
+
+    <div class="api-loading-banner error-banner" *ngIf="apiError" role="alert">
+      <p>{{ apiError }}</p>
+    </div>
+
+    <!-- =======================================================================
+         Screen 6: Sonar Challenge Modal
+         ======================================================================= -->
+    <div class="modal-overlay puzzle-overlay" *ngIf="currentPuzzle">
+      <div class="sonar-challenge-frame">
+        <!-- Challenge Badge Header (Screen 6) -->
+        <div class="challenge-top-badge">CHALLENGE</div>
+        <div class="challenge-level-sub">
+          {{ gameState.level === 1 ? 'LEVEL 1: SHARK WATERS' : (gameState.level === 2 ? 'LEVEL 2: PIRATE COVE' : 'LEVEL 3: ABYSS TRENCH') }} - {{ gameState.chestsCollected }}/3
+        </div>
+
+        <div class="inner-challenge-box">
+          <!-- Phase 1: Memorization Phase (5s Countdown) -->
+          <ng-container *ngIf="puzzlePhase === 'memorize'">
+            <div class="inner-header-banner">
+              👁️ PHASE 1: MEMORIZE THE SEA LIFE!
+            </div>
+
+            <!-- 5-Second Timer Bar -->
+            <div class="phase-timer-bar">
+              <div class="timer-badge">⏳ {{ memorizeTimer }}s</div>
+              <div class="timer-progress-track">
+                <div class="timer-progress-fill phase1" [style.width.%]="(memorizeTimer / 5) * 100"></div>
+              </div>
+            </div>
+
+            <!-- Visible Fish Puzzle Image -->
+            <div class="puzzle-view-container">
+              <img 
+                [src]="currentPuzzle.question" 
+                alt="Fish Game Challenge" 
+                class="fish-puzzle-img" 
+              />
+            </div>
+
+            <p class="phase-instruction">
+              Count all sea life on the sonar display! The image will disappear in <strong>{{ memorizeTimer }}s</strong>!
+            </p>
+          </ng-container>
+
+          <!-- Phase 2: Rapid Answer Phase (Image Disappeared, 3 Options, 5s Countdown) -->
+          <ng-container *ngIf="puzzlePhase === 'answer'">
+            <div class="inner-header-banner answer-alert">
+              🎯 PHASE 2: RADAR CONCEALED - WHAT WAS THE COUNT?
+            </div>
+
+            <!-- 5-Second Answer Countdown Bar -->
+            <div class="phase-timer-bar">
+              <div class="timer-badge urgent">⚠️ {{ answerTimer }}s LEFT</div>
+              <div class="timer-progress-track">
+                <div class="timer-progress-fill phase2" [style.width.%]="(answerTimer / 5) * 100"></div>
+              </div>
+            </div>
+
+            <!-- Concealed Radar Screen (Image is Gone) -->
+            <div class="puzzle-view-container radar-concealed-screen">
+              <div class="radar-scan-line"></div>
+              <div class="radar-classified-text">
+                <span class="lock-glyph">🔒</span>
+                <h4>SONAR IMAGE CONCEALED</h4>
+                <p>Telemetry recorded. Select the matching sea life count before time expires!</p>
+              </div>
+            </div>
+
+            <!-- 3 Oval Option Buttons (Correct + 2 Distractors) -->
+            <div class="three-options-prompt">Pick the correct count:</div>
+            <div class="three-options-grid">
+              <button 
+                type="button"
+                *ngFor="let opt of puzzleOptions"
+                class="sonar-choice-oval"
+                [class.selected]="userAnswer === opt"
+                (click)="selectAnswerOption(opt)"
+                [disabled]="submitting"
+              >
+                <span class="choice-num">{{ opt }}</span>
+                <span class="choice-sub">FISH</span>
+              </button>
+            </div>
+          </ng-container>
+
+          <!-- Feedback message -->
+          <p 
+            *ngIf="puzzleMessage" 
+            class="challenge-feedback" 
+            [class.success]="isPuzzleSuccess" 
+            [class.error]="!isPuzzleSuccess"
+          >
+            {{ puzzleMessage }}
+          </p>
+
+          <div class="challenge-footer">
+            <button type="button" class="btn-pill btn-white" (click)="closePuzzle()">
+              Disengage (Leave Chest)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         Screen 7: Level Complete Modal
+         ======================================================================= -->
+    <div class="modal-overlay" *ngIf="isLevelComplete">
+      <div class="ocean-glass-card wide modal-center-card">
+        <div class="card-logo-wrap">
+          <img src="assets/logo/logo.png" alt="Ocean Quest Chronicles" class="card-logo" />
+        </div>
+
+        <h2 class="card-title">⭐ LEVEL {{ completedLevelNumber }} COMPLETE!</h2>
+        <p class="card-subtitle">
+          {{ completedLevelNumber === 1 ? 'SHARK WATERS CLEARED! LEVEL 2 (PIRATE COVE) IS NOW UNLOCKED!' : 'PIRATE COVE CLEARED! LEVEL 3 (ABYSS TRENCH) IS NOW UNLOCKED!' }}
+        </p>
+
+        <div class="star-rating">{{ completedLevelNumber === 1 ? '★☆☆' : '★★☆' }}</div>
+
+        <div class="stat-list">
+          <div class="stat-item">
+            <span class="stat-label">PILOT CALL-SIGN</span>
+            <span class="stat-val">{{ pilotCallsign }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LEVEL CLEARED</span>
+            <span class="stat-val">
+              {{ completedLevelNumber === 1 ? 'Level 1: Shark Waters (Easy)' : 'Level 2: Pirate Cove (Medium)' }}
+            </span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">SCORE SO FAR</span>
+            <span class="stat-val highlight">{{ gameState.score }} PTS</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LIVES LEFT</span>
+            <span class="stat-val">{{ livesCount }} / 3</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">CORRECT ANSWERS</span>
+            <span class="stat-val">{{ correctAnswers }}</span>
+          </div>
+        </div>
+
+        <div class="highlight-box-dashed">
+          {{ completedLevelNumber === 1 ? 'NEXT: LEVEL 2 - PIRATE COVE (MEDIUM DIFFICULTY). WATCH OUT FOR PIRATE RAIDERS!' : 'NEXT: LEVEL 3 - ABYSS TRENCH (HARD DIFFICULTY). EXTREME DEPTH & PREDATORS!' }}
+        </div>
+
+        <div class="btn-row" style="margin-top: 1.5rem;">
+          <button class="btn-pill btn-coral" (click)="proceedToNextLevel()">
+            NEXT LEVEL ▶
+          </button>
+          <button class="btn-pill btn-ice" (click)="goToLevelMap()">
+            🗺️ LEVEL MAP
+          </button>
+          <button class="btn-pill btn-white" (click)="goToMainMenu()">
+            MAIN MENU
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         Screen 8: Victory (End of Game) Modal
+         ======================================================================= -->
+    <div class="modal-overlay" *ngIf="isVictory">
+      <div class="ocean-glass-card wide modal-center-card">
+        <div class="card-logo-wrap">
+          <img src="assets/logo/logo.png" alt="Ocean Quest Chronicles" class="card-logo" />
+        </div>
+
+        <h2 class="card-title">🏆 GRAND EXPEDITION VICTORY!</h2>
+        <p class="card-subtitle">
+          CONGRATULATIONS! YOU CONQUERED ALL 3 SECTORS (SHARK WATERS, PIRATE COVE, AND ABYSS TRENCH) AND UNCOVERED THE SECRETS OF THE DEEP!
+        </p>
+
+        <div class="star-rating">★★★</div>
+
+        <div class="stat-list">
+          <div class="stat-item">
+            <span class="stat-label">PILOT CALL-SIGN</span>
+            <span class="stat-val">{{ pilotCallsign }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">TITLE EARNED</span>
+            <span class="stat-val" style="color: #ffbe3b;">Grand Master of the Trench</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">FINAL SCORE</span>
+            <span class="stat-val highlight">{{ gameState.score }} PTS</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LEVELS CLEARED</span>
+            <span class="stat-val">3 / 3 (100%)</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LIVES LEFT</span>
+            <span class="stat-val">{{ livesCount }} / 3</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">CORRECT ANSWERS</span>
+            <span class="stat-val">{{ correctAnswers }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">SURVIVAL TIME</span>
+            <span class="stat-val">{{ formattedSurvivalTime }}</span>
+          </div>
+        </div>
+
+        <div class="highlight-box-dashed">
+          <div>BEST SCORE: {{ bestScore }} PTS</div>
+          <small style="font-weight: 500; opacity: 0.8;">- THE END -</small>
+        </div>
+
+        <div class="btn-row" style="margin-top: 1.5rem;">
+          <button class="btn-pill btn-coral" (click)="startGame(1)">
+            PLAY AGAIN
+          </button>
+          <button class="btn-pill btn-white" (click)="goToLeaderboard()">
+            LEADERBOARD
+          </button>
+          <button class="btn-pill btn-white" (click)="goToMainMenu()">
+            MAIN MENU
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         Screen 9: Game Over Modal
+         ======================================================================= -->
+    <div class="modal-overlay" *ngIf="isGameOverModal">
+      <div class="ocean-glass-card wide modal-center-card">
+        <div class="card-logo-wrap">
+          <img src="assets/logo/logo.png" alt="Ocean Quest Chronicles" class="card-logo" />
+        </div>
+
+        <h2 class="card-title">💀 GAME OVER</h2>
+        <p class="card-subtitle">THE SEA CLAIMED THIS DIVE. YOU RAN OUT OF LIVES!</p>
+
+        <div class="hearts-row" style="justify-content: center; margin: 0.5rem 0 1rem 0;">
+          <span class="heart-icon depleted">🖤</span>
+          <span class="heart-icon depleted">🖤</span>
+          <span class="heart-icon depleted">🖤</span>
+        </div>
+
+        <div class="stat-list">
+          <div class="stat-item">
+            <span class="stat-label">PILOT CALL-SIGN</span>
+            <span class="stat-val">{{ pilotCallsign }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">FINAL SCORE</span>
+            <span class="stat-val highlight">{{ gameState.score }} PTS</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LEVEL REACHED</span>
+            <span class="stat-val">
+              {{ gameState.level === 1 ? 'Level 1: Shark Waters (Easy)' : (gameState.level === 2 ? 'Level 2: Pirate Cove (Medium)' : 'Level 3: Abyss Trench (Hard)') }}
+            </span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">CORRECT ANSWERS</span>
+            <span class="stat-val">{{ correctAnswers }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">SURVIVAL TIME</span>
+            <span class="stat-val">{{ formattedSurvivalTime }}</span>
+          </div>
+        </div>
+
+        <div class="highlight-box-dashed">
+          BEST SCORE: {{ bestScore }} PTS - DIVE AGAIN TO BEAT IT!
+        </div>
+
+        <div class="btn-row" style="margin-top: 1.5rem;">
+          <button class="btn-pill btn-coral" (click)="startGame(gameState.level)">
+            PLAY AGAIN
+          </button>
+          <button class="btn-pill btn-ice" (click)="goToLevelMap()">
+            🗺️ LEVEL MAP
+          </button>
+          <button class="btn-pill btn-white" (click)="goToLeaderboard()">
+            LEADERBOARD
+          </button>
+          <button class="btn-pill btn-white" (click)="goToMainMenu()">
+            MAIN MENU
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         Screen 11: New High Score Record Modal
+         ======================================================================= -->
+    <div class="modal-overlay" *ngIf="isHighScoreModal">
+      <div class="ocean-glass-card wide modal-center-card">
+        <h2 class="card-title">🎉 NEW HIGH SCORE RECORD!</h2>
+        <p class="card-subtitle">CONGRATULATIONS, DIVER! YOU SET A NEW PERSONAL BEST!</p>
+
+        <div class="stat-list">
+          <div class="stat-item">
+            <span class="stat-label">PILOT CALL-SIGN</span>
+            <span class="stat-val">{{ pilotCallsign }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">FINAL SCORE</span>
+            <span class="stat-val highlight">
+              {{ gameState.score }} PTS <span class="badge-new-record">⭐ NEW RECORD</span>
+            </span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LEVEL REACHED</span>
+            <span class="stat-val">
+              {{ gameState.level === 1 ? 'Level 1: Shark Waters (Easy)' : (gameState.level === 2 ? 'Level 2: Pirate Cove (Medium)' : 'Level 3: Abyss Trench (Hard)') }}
+            </span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">SURVIVAL TIME</span>
+            <span class="stat-val">{{ formattedSurvivalTime }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">LOCATION</span>
+            <span class="stat-val location-val">{{ pilotLocation }}</span>
+          </div>
+        </div>
+
+        <div class="highlight-pill-banner">
+          STATUS: RECORD SYNCED TO GLOBAL LEADERBOARD!
+        </div>
+
+        <div class="btn-row" style="margin-top: 1.5rem;">
+          <button class="btn-pill btn-coral" (click)="startGame(1)">
+            PLAY AGAIN
+          </button>
+          <button class="btn-pill btn-white" (click)="goToLeaderboard()">
+            LEADERBOARD
+          </button>
+          <button class="btn-pill btn-white" (click)="goToMainMenu()">
+            MAIN MENU
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =======================================================================
+         Initial Mission Briefing (Before starting dive)
+         ======================================================================= -->
+    <div class="modal-overlay" *ngIf="!gameState.isPlaying && !gameState.isGameOver && !isLevelComplete && !isVictory && !isHighScoreModal">
+      <div class="ocean-glass-card wide modal-center-card">
+        <div class="card-logo-wrap">
+          <img src="assets/logo/logo.png" alt="Ocean Quest Chronicles" class="card-logo" />
+        </div>
+        <h2 class="card-title">DIVING MISSION BRIEFING</h2>
+        <p class="card-subtitle">
+          Pilot your deep-sea submersible. Evade sharks in <strong>Shark Waters</strong> and pirates in <strong>Pirate Cove</strong>. Gather oxygen bubbles and solve ancient mathematical fish ciphers from the <strong>UoB Fish Game API</strong> to claim sunken treasure!
+        </p>
+
+        <div class="controls-guide-grid">
+          <div class="guide-box">
+            <span class="guide-key">WASD / Arrows</span>
+            <span class="guide-desc">Swim in 4 Directions</span>
+          </div>
+          <div class="guide-box">
+            <span class="guide-key">Mouse Click</span>
+            <span class="guide-desc">Direct Diver Towards Point</span>
+          </div>
+          <div class="guide-box">
+            <span class="guide-key">[E] or Click Chest</span>
+            <span class="guide-desc">Open Sonar Challenge</span>
+          </div>
+        </div>
+
+        <div class="btn-stack" style="margin-top: 1.5rem;">
+          <button class="btn-pill btn-coral btn-hero" (click)="startGame(gameState.level)">
+            DIVE IN NOW 🤿
+          </button>
+          <button class="btn-pill btn-ice" (click)="goToLevelMap()">
+            🗺️ VIEW LEVEL MAP
+          </button>
+          <button class="btn-pill btn-white" (click)="goToMainMenu()">
+            MAIN MENU
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Overlay -->
+    <div class="modal-overlay" *ngIf="gameState.isPaused && gameState.isPlaying">
+      <div class="ocean-glass-card modal-center-card">
+        <h2 class="card-title">⏸ EXPEDITION PAUSED</h2>
+        <p class="card-subtitle">Depth: {{ gameState.depth }}m | Score: {{ gameState.score }}</p>
+        <div class="btn-stack" style="margin-top: 1.5rem;">
+          <button class="btn-pill btn-coral" (click)="togglePause()">
+            RESUME DIVE (P)
+          </button>
+          <button class="btn-pill btn-white" (click)="openSettings()">
+            GAME SETTINGS
+          </button>
+          <button class="btn-pill btn-ice" (click)="goToMainMenu()">
+            EXIT TO MENU
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Settings Modal Component (Screen 4) -->
+    <app-settings-modal 
+      *ngIf="isSettingsOpen" 
+      [visible]="isSettingsOpen" 
+      (close)="closeSettings()"
+    ></app-settings-modal>
+
+  </main>
+</div>
