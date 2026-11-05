@@ -1,0 +1,178 @@
+<div class="level-map-wrapper">
+  <!-- Full-Screen Adventure Map Artwork (using level-map-bg.png) -->
+  <div class="map-bg-artwork"></div>
+
+  <!-- Ambient Rising Bubbles Layer -->
+  <div class="ambient-bubbles-layer">
+    <div class="ambient-bubble b1"></div>
+    <div class="ambient-bubble b2"></div>
+    <div class="ambient-bubble b3"></div>
+    <div class="ambient-bubble b4"></div>
+    <div class="ambient-bubble b5"></div>
+  </div>
+
+  <!-- Top-Left Circular Back Button -->
+  <button type="button" class="btn-map-circle-back" (click)="goToMainMenu()" title="Back to Main Menu">
+    <svg viewBox="0 0 24 24" class="back-arrow-svg">
+      <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <!-- Top-Center Wooden "Select Level" Plaque -->
+  <div class="wooden-select-level-banner">
+    <span class="wave-accent-left">🌊</span>
+    <span class="banner-title-text">Select Level</span>
+    <span class="wave-accent-right">🌊</span>
+  </div>
+
+  <!-- Top-Right Settings Gear -->
+  <button type="button" class="btn-map-settings-round" (click)="openSettings()" title="Settings">
+    <span class="gear-icon">⚙️</span>
+  </button>
+
+  <!-- Interactive Map Stage with 3 Level Nodes (Level 3 is Final Level) -->
+  <main class="adventure-map-stage">
+    
+    <!-- Bubble Trail Path Connecting Node 1 -> Node 2 -> Node 3 -->
+    <svg class="bubble-trail-svg" viewBox="0 0 1000 600" preserveAspectRatio="none">
+      <!-- Node 1 (170, 360) -> Node 2 (510, 432) -->
+      <path d="M 170,360 C 270,410 390,460 510,432" class="bubble-stream-path" />
+      <!-- Node 2 (510, 432) -> Node 3 (800, 288) -->
+      <path d="M 510,432 C 630,420 720,330 800,288" class="bubble-stream-path" />
+    </svg>
+
+    <!-- ==================== LEVEL 1: Shark Waters (Easy) ==================== -->
+    <div class="wood-sign-plate sign-node-1" (click)="selectNode(1)">
+      <span class="wood-sign-name">1. Shark Waters</span>
+      <div class="wood-sign-stars">
+        <span class="star-gold">★</span>
+        <span class="star-gold">★</span>
+        <span class="star-dim">★</span>
+      </div>
+      <span class="sign-difficulty-tag easy">EASY</span>
+    </div>
+
+    <div 
+      class="adventure-node-circle node-pos-1"
+      [class.selected]="selectedLevel === 1"
+      (click)="selectNode(1)"
+    >
+      <div class="halo-sonar-pulse" *ngIf="selectedLevel === 1"></div>
+      
+      <!-- Diver Chibi Avatar on selected node -->
+      <div class="diver-chibi-badge" *ngIf="selectedLevel === 1">
+        <img src="assets/sprites/diver/svg/swim1_right.svg" alt="Diver" class="diver-chibi-img" (error)="onAvatarError($event)" />
+        <span class="diver-chibi-emoji">🤿</span>
+      </div>
+
+      <div class="node-disc-glass">
+        <span class="node-digit">1</span>
+      </div>
+      <div class="node-arrow-down" *ngIf="selectedLevel === 1">▼</div>
+    </div>
+
+    <!-- ==================== LEVEL 2: Pirate Cove (Medium) ==================== -->
+    <div class="wood-sign-plate sign-node-2" (click)="selectNode(2)">
+      <span class="wood-sign-name">2. Pirate Cove</span>
+      <div class="wood-sign-stars">
+        <span class="star-gold">★</span>
+        <span class="star-gold">★</span>
+        <span class="star-dim">★</span>
+      </div>
+      <span class="sign-difficulty-tag medium">MEDIUM</span>
+    </div>
+
+    <div 
+      class="adventure-node-circle node-pos-2"
+      [class.locked]="!isLevelUnlocked(2)"
+      [class.selected]="selectedLevel === 2"
+      (click)="selectNode(2)"
+    >
+      <div class="halo-sonar-pulse" *ngIf="selectedLevel === 2"></div>
+
+      <!-- Diver Chibi Avatar on selected node -->
+      <div class="diver-chibi-badge" *ngIf="selectedLevel === 2">
+        <img src="assets/sprites/diver/svg/swim1_right.svg" alt="Diver" class="diver-chibi-img" (error)="onAvatarError($event)" />
+        <span class="diver-chibi-emoji">🤿</span>
+      </div>
+
+      <div class="node-disc-glass" [class.unlocked-disc]="isLevelUnlocked(2)">
+        <span class="node-digit" *ngIf="isLevelUnlocked(2)">2</span>
+        <span class="node-padlock-icon" *ngIf="!isLevelUnlocked(2)">🔒</span>
+      </div>
+      <div class="sub-node-number" *ngIf="!isLevelUnlocked(2)">2</div>
+      <div class="node-arrow-down" *ngIf="selectedLevel === 2">▼</div>
+    </div>
+
+    <!-- ==================== LEVEL 3: Abyss Trench (Hard - FINAL LEVEL) ==================== -->
+    <div class="wood-sign-plate sign-node-3 sign-final" (click)="selectNode(3)">
+      <div class="final-level-banner-chip">👑 FINAL LEVEL</div>
+      <span class="wood-sign-name">3. Abyss Trench</span>
+      <div class="wood-sign-stars">
+        <span class="star-gold">★</span>
+        <span class="star-gold">★</span>
+        <span class="star-gold">★</span>
+      </div>
+      <span class="sign-difficulty-tag hard">HARD</span>
+    </div>
+
+    <div 
+      class="adventure-node-circle node-pos-3 node-final"
+      [class.locked]="!isLevelUnlocked(3)"
+      [class.selected]="selectedLevel === 3"
+      (click)="selectNode(3)"
+    >
+      <div class="halo-sonar-pulse final-pulse" *ngIf="selectedLevel === 3"></div>
+
+      <!-- Diver Chibi Avatar on selected node -->
+      <div class="diver-chibi-badge" *ngIf="selectedLevel === 3">
+        <img src="assets/sprites/diver/svg/swim1_right.svg" alt="Diver" class="diver-chibi-img" (error)="onAvatarError($event)" />
+        <span class="diver-chibi-emoji">🤿</span>
+      </div>
+
+      <div class="node-disc-glass final-disc" [class.unlocked-disc]="isLevelUnlocked(3)">
+        <span class="node-digit final-digit" *ngIf="isLevelUnlocked(3)">3</span>
+        <span class="node-padlock-icon" *ngIf="!isLevelUnlocked(3)">🔒</span>
+      </div>
+      <div class="sub-node-number" *ngIf="!isLevelUnlocked(3)">3</div>
+      <div class="node-crown-top" *ngIf="isLevelUnlocked(3)">👑</div>
+      <div class="node-arrow-down" *ngIf="selectedLevel === 3">▼</div>
+    </div>
+
+  </main>
+
+  <!-- Level Launch Preview Modal (Opens when an unlocked level node is tapped) -->
+  <div class="level-launch-modal-backdrop" *ngIf="isLaunchModalOpen" (click)="closeLaunchModal()">
+    <div class="level-launch-card" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close-corner" (click)="closeLaunchModal()">✕</button>
+
+      <div class="modal-card-header">
+        <div class="modal-header-badges">
+          <span class="modal-sector-difficulty" [ngClass]="currentLevelData.difficulty.toLowerCase()">
+            {{ currentLevelData.difficulty }}
+          </span>
+          <span class="modal-final-badge" *ngIf="selectedLevel === 3">👑 FINAL LEVEL</span>
+        </div>
+        <h2 class="modal-sector-title">LEVEL {{ selectedLevel }}: {{ currentLevelData.name }}</h2>
+        <span class="modal-depth-badge">⚓ {{ currentLevelData.depth }}m Depth</span>
+      </div>
+
+      <p class="modal-sector-desc">{{ currentLevelData.description }}</p>
+
+      <div class="modal-threat-row">
+        <span class="modal-tag threat">⚠️ Threats: {{ currentLevelData.threat }}</span>
+        <span class="modal-tag sanctuary">🛡️ Sanctuary: {{ currentLevelData.zone }}</span>
+      </div>
+
+      <div class="modal-actions-row">
+        <button type="button" class="btn-dive-now-gold" (click)="launchSelectedLevel()">
+          {{ selectedLevel === 3 ? 'FINAL DIVE 👑' : 'DIVE NOW 🤿' }}
+        </button>
+        <button type="button" class="btn-leaderboard-wood" (click)="goToLeaderboard()">
+          🏆 LEADERBOARD
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
