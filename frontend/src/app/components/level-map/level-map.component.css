@@ -1,0 +1,635 @@
+/* ==========================================================================
+   Level Map UI Stylesheet (3-Level Adventure Journey)
+   Artwork: assets/background/level-map-bg.png only
+   ========================================================================== */
+.level-map-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  font-family: 'Fredoka One', 'Nunito', 'Segoe UI', system-ui, sans-serif;
+  color: #fff;
+  background: #021a32;
+}
+
+/* 1. Full-Bleed Map Background Artwork - level-map-bg.png only */
+.map-bg-artwork {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('../../../assets/background/level-map-bg.png');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  z-index: 1;
+}
+
+/* Subtle Ambient Rising Bubbles */
+.ambient-bubbles-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.ambient-bubble {
+  position: absolute;
+  bottom: -40px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.85), rgba(56, 189, 248, 0.25) 60%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 50%;
+  animation: floatBubbleUp 14s infinite linear;
+}
+
+.ambient-bubble.b1 { left: 14%; width: 14px; height: 14px; animation-duration: 12s; animation-delay: 0s; }
+.ambient-bubble.b2 { left: 28%; width: 22px; height: 22px; animation-duration: 16s; animation-delay: 3s; }
+.ambient-bubble.b3 { left: 48%; width: 10px; height: 10px; animation-duration: 10s; animation-delay: 1.5s; }
+.ambient-bubble.b4 { left: 72%; width: 18px; height: 18px; animation-duration: 15s; animation-delay: 5s; }
+.ambient-bubble.b5 { left: 86%; width: 26px; height: 26px; animation-duration: 18s; animation-delay: 2s; }
+
+@keyframes floatBubbleUp {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.7; }
+  100% { transform: translateY(-110vh) translateX(30px); opacity: 0; }
+}
+
+/* 2. Top-Left Circular Back Button */
+.btn-map-circle-back {
+  position: absolute;
+  top: 2.2%;
+  left: 2.5%;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 60%, #0369a1 100%);
+  border: 4px solid #ffffff;
+  box-shadow: 0 6px 18px rgba(2, 44, 75, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.btn-map-circle-back:hover {
+  transform: scale(1.08);
+  filter: brightness(1.1);
+}
+
+.back-arrow-svg {
+  width: 30px;
+  height: 30px;
+  stroke: #ffffff;
+}
+
+/* 3. Top-Center Wooden Plaque ("Select Level") */
+.wooden-select-level-banner {
+  position: absolute;
+  top: 2%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  background: linear-gradient(180deg, #fef3c7 0%, #fde68a 35%, #f59e0b 85%, #b45309 100%);
+  padding: 0.55rem 2.6rem 0.65rem;
+  border-radius: 20px;
+  border: 4px solid #78350f;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 3px 2px rgba(255, 255, 255, 0.8);
+  z-index: 10;
+  pointer-events: none;
+}
+
+.banner-title-text {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #1e3a8a;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.wave-accent-left,
+.wave-accent-right {
+  font-size: 1.4rem;
+}
+
+/* 4. Top-Right Settings Gear */
+.btn-map-settings-round {
+  position: absolute;
+  top: 2.2%;
+  right: 2.5%;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 60%, #0369a1 100%);
+  border: 4px solid #ffffff;
+  box-shadow: 0 6px 18px rgba(2, 44, 75, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.18s ease;
+}
+
+.btn-map-settings-round:hover {
+  transform: scale(1.08) rotate(45deg);
+}
+
+.gear-icon {
+  font-size: 1.7rem;
+}
+
+/* 5. Main Adventure Map Stage */
+.adventure-map-stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+}
+
+/* Bubble Trail SVG Connecting 3 Nodes */
+.bubble-trail-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.bubble-stream-path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 7;
+  stroke-dasharray: 6, 18;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.95));
+  animation: streamFlow 10s linear infinite;
+}
+
+@keyframes streamFlow {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -200; }
+}
+
+/* 6. Wooden Signboards */
+.wood-sign-plate {
+  position: absolute;
+  background: linear-gradient(180deg, #b45309 0%, #92400e 50%, #78350f 100%);
+  border: 3px solid #451a03;
+  border-radius: 14px;
+  padding: 0.45rem 1rem 0.5rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55), inset 0 2px 2px rgba(251, 191, 36, 0.4);
+  text-align: center;
+  z-index: 8;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+.wood-sign-plate:hover {
+  transform: translate(-50%, -100%) scale(1.05);
+}
+
+.wood-sign-name {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #fef3c7;
+  letter-spacing: 0.03em;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.wood-sign-stars {
+  display: flex;
+  justify-content: center;
+  gap: 0.2rem;
+  margin: 0.15rem 0;
+  font-size: 1rem;
+}
+
+.star-gold { color: #facc15; text-shadow: 0 0 6px rgba(250, 204, 21, 0.8); }
+.star-dim { color: #52351e; }
+
+.sign-difficulty-tag {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sign-difficulty-tag.easy { background: #059669; color: #fff; }
+.sign-difficulty-tag.medium { background: #d97706; color: #fff; }
+.sign-difficulty-tag.hard { background: #dc2626; color: #fff; }
+
+/* Final Level Signboard Accents */
+.sign-node-3.sign-final {
+  background: linear-gradient(180deg, #78350f 0%, #451a03 100%);
+  border: 3px solid #f59e0b;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.35), inset 0 2px 4px rgba(253, 224, 71, 0.5);
+}
+
+.final-level-banner-chip {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 0.12rem 0.5rem;
+  border-radius: 8px;
+  margin-bottom: 0.25rem;
+  display: inline-block;
+  letter-spacing: 0.06em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  animation: finalGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes finalGlow {
+  from { filter: drop-shadow(0 0 4px #f59e0b); }
+  to { filter: drop-shadow(0 0 10px #ef4444); }
+}
+
+/* Signboard Placement corresponding to the 3 Nodes */
+.sign-node-1 {
+  left: 18%;
+  top: 44%;
+  transform: translate(-50%, -100%);
+}
+
+.sign-node-2 {
+  left: 52%;
+  top: 59%;
+  transform: translate(-50%, -100%);
+}
+
+.sign-node-3 {
+  left: 81%;
+  top: 31%;
+  transform: translate(-50%, -100%);
+}
+
+/* 7. Circular Level Nodes */
+.adventure-node-circle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 7;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.adventure-node-circle:hover {
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+/* Positions matching 3 regions of level-map-bg.png */
+.node-pos-1 { left: 18%; top: 60%; }
+.node-pos-2 { left: 52%; top: 74%; }
+.node-pos-3 { left: 81%; top: 48%; }
+
+/* Glass Blue Disc for Nodes */
+.node-disc-glass {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(56, 189, 248, 0.9) 0%, rgba(3, 105, 161, 0.95) 70%, #0c4a6e 100%);
+  border: 4px solid #ffffff;
+  box-shadow: 0 8px 26px rgba(2, 44, 75, 0.75), inset 0 3px 6px rgba(255, 255, 255, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.adventure-node-circle.locked .node-disc-glass {
+  background: radial-gradient(circle at 35% 35%, rgba(71, 85, 105, 0.9) 0%, rgba(30, 41, 59, 0.95) 70%, #0f172a 100%);
+  border-color: #94a3b8;
+}
+
+/* Final Level Disc: Majestic Gold Rim & Deep Void Center */
+.node-disc-glass.final-disc {
+  border-color: #facc15;
+  box-shadow: 0 10px 32px rgba(245, 158, 11, 0.65), inset 0 3px 8px rgba(254, 240, 138, 0.8);
+}
+
+.node-digit {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+.node-digit.final-digit {
+  color: #fef08a;
+  text-shadow: 0 0 12px rgba(250, 204, 21, 0.9), 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.node-padlock-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.sub-node-number {
+  position: absolute;
+  bottom: -24px;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.9);
+}
+
+.node-crown-top {
+  position: absolute;
+  top: -24px;
+  font-size: 1.6rem;
+  filter: drop-shadow(0 2px 8px rgba(250, 204, 21, 0.8));
+  animation: floatCrown 2s ease-in-out infinite alternate;
+}
+
+@keyframes floatCrown {
+  from { transform: translateY(0); }
+  to { transform: translateY(-4px); }
+}
+
+/* Diver Avatar Badge on selected node */
+.diver-chibi-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  pointer-events: none;
+}
+
+.diver-chibi-img {
+  width: 62px;
+  height: 62px;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.75));
+}
+
+.diver-chibi-emoji {
+  display: none;
+  font-size: 3rem;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
+}
+
+/* Luminous Sonar Ring Pulse around selected node */
+.halo-sonar-pulse {
+  position: absolute;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  border: 4px solid #38bdf8;
+  box-shadow: 0 0 32px rgba(56, 189, 248, 0.95);
+  animation: pulseGlow 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.halo-sonar-pulse.final-pulse {
+  border-color: #f59e0b;
+  box-shadow: 0 0 36px rgba(245, 158, 11, 0.95);
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 0.5; }
+}
+
+.node-arrow-down {
+  position: absolute;
+  bottom: -32px;
+  font-size: 1.2rem;
+  color: #38bdf8;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.9));
+  animation: bounceArrow 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes bounceArrow {
+  from { transform: translateY(0); }
+  to { transform: translateY(4px); }
+}
+
+/* 8. Level Launch Modal (Popup on Node Tap) */
+.level-launch-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 26, 50, 0.8);
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+
+.level-launch-card {
+  position: relative;
+  background: linear-gradient(180deg, #0e4e7b 0%, #062b47 60%, #031c30 100%);
+  border: 4px solid #38bdf8;
+  border-radius: 28px;
+  padding: 2.2rem 2.8rem;
+  max-width: 540px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), inset 0 2px 6px rgba(255, 255, 255, 0.4);
+  text-align: center;
+  animation: scalePop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scalePop {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.modal-close-corner {
+  position: absolute;
+  top: 1rem;
+  right: 1.2rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 900;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.modal-close-corner:hover {
+  background: #ef4444;
+  transform: scale(1.1);
+}
+
+.modal-card-header {
+  margin-bottom: 1.2rem;
+}
+
+.modal-header-badges {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.modal-sector-difficulty {
+  display: inline-block;
+  padding: 0.25rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.modal-sector-difficulty.easy { background: #059669; color: #fff; }
+.modal-sector-difficulty.medium { background: #d97706; color: #fff; }
+.modal-sector-difficulty.hard { background: #dc2626; color: #fff; }
+
+.modal-final-badge {
+  display: inline-block;
+  padding: 0.25rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.7);
+}
+
+.modal-sector-title {
+  margin: 0.3rem 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.modal-depth-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 0.25rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #7dd3fc;
+}
+
+.modal-sector-desc {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 1rem 0;
+}
+
+.modal-threat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 1.2rem 0;
+  text-align: left;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.8rem 1.2rem;
+  border-radius: 14px;
+}
+
+.modal-tag {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.modal-tag.threat { color: #fca5a5; }
+.modal-tag.sanctuary { color: #6ee7b7; }
+
+.modal-actions-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
+
+.btn-dive-now-gold {
+  flex: 1;
+  padding: 0.95rem 1.8rem;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #f59e0b 0%, #d97706 60%, #b45309 100%);
+  border: 3px solid #fef3c7;
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.5);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-dive-now-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(217, 119, 6, 0.7);
+}
+
+.btn-leaderboard-wood {
+  padding: 0.95rem 1.4rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-leaderboard-wood:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .wooden-select-level-banner {
+    padding: 0.4rem 1.5rem;
+  }
+  .banner-title-text {
+    font-size: 1.3rem;
+  }
+  .btn-map-circle-back,
+  .btn-map-settings-round {
+    width: 44px;
+    height: 44px;
+  }
+  .back-arrow-svg {
+    width: 22px;
+    height: 22px;
+  }
+  .node-disc-glass {
+    width: 60px;
+    height: 60px;
+  }
+  .node-digit {
+    font-size: 1.6rem;
+  }
+  .wood-sign-plate {
+    padding: 0.3rem 0.6rem;
+  }
+  .wood-sign-name {
+    font-size: 0.8rem;
+  }
+}
