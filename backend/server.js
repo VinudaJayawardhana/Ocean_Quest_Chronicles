@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/server.js
  * Description: Express entry point. Wires middleware and delegates to modular routers.
  * COUPLING/COHESION: Only composition happens here; business logic lives in controllers/services.

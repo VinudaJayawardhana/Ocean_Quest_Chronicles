@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/controllers/authController.js
  * Description: Registration, login, logout and "who am I" - the virtual identity of a pilot.
  *

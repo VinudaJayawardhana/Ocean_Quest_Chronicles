@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/routes/scoreRoutes.js
  * Description: Leaderboard (public) and score submission (logged-in pilots only).
  */

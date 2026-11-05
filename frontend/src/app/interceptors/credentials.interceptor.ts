@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * VIRTUAL IDENTITY: Makes the browser send the session cookie to OUR API (localhost:5000).
  * Requests to other sites (e.g. ipapi.co) are left alone so no cookie leaks to third parties.
  */

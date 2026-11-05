@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: frontend/src/app/services/marine.service.ts
  * Description: Dedicated Angular service for Marine Weather, Water Temperature, and Day/Night APIs.
  * Kept strictly in a separate file from the Fish Game API and ApiService for clean modularity.

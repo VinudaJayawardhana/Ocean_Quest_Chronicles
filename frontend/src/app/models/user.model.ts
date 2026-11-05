@@ -1,4 +1,4 @@
-/** Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md) */
+/** Ocean Quest Chronicles Project (see docs/references.md) */
 export interface PilotProfile {
   callsign: string;
   avatarUrl: string;

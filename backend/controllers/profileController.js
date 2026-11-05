@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/controllers/profileController.js
  * Description: Pilot profile (dossier). Identity comes from the server session.
  */

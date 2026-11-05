@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/controllers/puzzleController.js
  * Description: Sonar Challenge endpoints. The solution never leaves the server until the
  *   player has answered (one answer per puzzle, 60 s time limit).

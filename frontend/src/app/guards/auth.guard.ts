@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * VIRTUAL IDENTITY: Protects /game and /profile. The decision is based on the server session.
  */
 import { Injectable } from '@angular/core';

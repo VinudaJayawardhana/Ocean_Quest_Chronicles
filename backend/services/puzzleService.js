@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/services/puzzleService.js
  * Description: Interoperability service - talks to Marc Conrad's Fish Game API.
  *

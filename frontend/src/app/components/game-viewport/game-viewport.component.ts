@@ -1,6 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
- * Scaffolded with an AI assistant and reviewed/edited by the author.
+ * Ocean Quest Chronicles Project (see docs/references.md).
  */
 import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';

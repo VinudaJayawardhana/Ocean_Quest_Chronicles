@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project
+ * Ocean Quest Chronicles Project
  * File: server/middleware/authMiddleware.js
  * Description: Middleware ensuring requests have an active authenticated session.
  * VIRTUAL IDENTITY: Verifies user session identity directly from server-side cookie store.

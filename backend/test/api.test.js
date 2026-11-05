@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/test/api.test.js
  * Description: End-to-end test of login, session cookie, Fish API proxy and verified scoring.
  * The Fish Game API is replaced by a local mock so the test is repeatable offline.

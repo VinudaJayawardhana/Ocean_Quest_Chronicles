@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: services/event-bus.service.ts
  *
  * EVENT-DRIVEN PROGRAMMING: A tiny publish/subscribe bus built on an RxJS Subject.

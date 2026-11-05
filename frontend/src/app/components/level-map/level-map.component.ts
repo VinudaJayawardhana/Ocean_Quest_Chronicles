@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
+ * Ocean Quest Chronicles Project (see docs/references.md).
  * Level Map UI exactly matching the user's reference game art layout.
  */
 import { Component, OnInit } from '@angular/core';

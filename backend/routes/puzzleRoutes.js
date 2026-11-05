@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/routes/puzzleRoutes.js
  * Description: /api/puzzle/* - mounted behind authMiddleware in server.js.
  */

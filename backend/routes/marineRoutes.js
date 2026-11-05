@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/routes/marineRoutes.js
  * Description: Dedicated route for Marine Weather & Telemetry API.
  * Completely separate from puzzle/fish API routes for modularity and low coupling.

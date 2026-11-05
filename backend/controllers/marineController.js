@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/controllers/marineController.js
  * Description: Dedicated Marine Telemetry & Weather API Controller.
  * Kept strictly separate from the Fish Game API per project modularity guidelines.

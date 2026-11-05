@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: services/auth.service.ts
  * VIRTUAL IDENTITY: The identity is an HttpOnly session cookie set by the server. The browser
  * keeps NO password and NO token (nothing for an XSS attack to steal). This service only

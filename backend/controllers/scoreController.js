@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/controllers/scoreController.js
  * Description: Leaderboard read + verified score save.
  * VIRTUAL IDENTITY: userId/username come from the session, never from the request body.

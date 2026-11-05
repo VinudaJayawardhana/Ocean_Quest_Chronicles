@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: services/api.service.ts
  * INTEROPERABILITY: JSON over HTTP(S) to our Express API. The Fish Game API is reached through
  * /puzzle/* so the answer is verified on the server and never travels to the browser early.

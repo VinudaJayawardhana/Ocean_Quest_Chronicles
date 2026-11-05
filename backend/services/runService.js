@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: backend/services/runService.js
  * Description: Server-side record of one game run (one dive), kept inside the user's session.
  *

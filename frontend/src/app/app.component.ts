@@ -1,6 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
- * Scaffolded with an AI assistant and reviewed/edited by the author.
+ * Ocean Quest Chronicles Project (see docs/references.md).
  */
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';

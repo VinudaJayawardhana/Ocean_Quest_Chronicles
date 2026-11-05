@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles Project (see docs/references.md)
  * File: frontend/src/app/models/marine-telemetry.model.ts
  * Description: Model for Real-Time Marine Weather & Ocean Telemetry API.
  * Kept strictly separate from fish-api.model.ts for low coupling.
