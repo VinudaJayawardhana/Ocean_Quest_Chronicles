@@ -1,19 +1,20 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project
+ * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
  * File: server/middleware/authMiddleware.js
- * Description: Middleware ensuring requests have an active authenticated session.
- * VIRTUAL IDENTITY: Verifies user session identity directly from server-side cookie store.
+ * Description: Middleware ensuring requests have an active authenticated server session.
+ * VIRTUAL IDENTITY: Identity is strictly taken from the server-side session cookie (req.session.userId).
+ * No client-supplied headers are trusted for identity.
  * COUPLING/COHESION: Low coupling - interceptor decoupling route handlers from session validation logic.
  */
 
 const authMiddleware = (req, res, next) => {
-  if (!req.session || !req.session.userId) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Active session required. Please log in.'
-    });
+  if (req.session && req.session.userId) {
+    return next();
   }
-  next();
+  return res.status(401).json({
+    error: 'Unauthorized',
+    message: 'Active session required. Please log in.'
+  });
 };
 
 module.exports = authMiddleware;

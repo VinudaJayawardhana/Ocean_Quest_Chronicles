@@ -6,12 +6,388 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <!-- Google Fonts: Fredoka & Nunito -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ═══════════════════════════════════════════
+       SPLASH WRAPPER
+    ═══════════════════════════════════════════ */
+    #oq-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-family: 'Fredoka', 'Nunito', sans-serif;
+      transition: opacity 0.9s cubic-bezier(0.4,0,0.2,1),
+                  visibility 0.9s cubic-bezier(0.4,0,0.2,1);
+    }
+    #oq-splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    /* ═══════════════════════════════════════════
+       LAYERED OCEAN BACKGROUND
+    ═══════════════════════════════════════════ */
+    .sp-bg {
+      position: absolute;
+      inset: -5%;
+      width: 110%;
+      height: 110%;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% 15%, rgba(13, 111, 168, 0.4) 0%, transparent 65%),
+        linear-gradient(180deg, rgba(4, 25, 48, 0.55) 0%, rgba(2, 12, 24, 0.78) 100%),
+        url('assets/background/welcome_screen_background/welcome_screen_background.png') center center / cover no-repeat;
+      animation: spKenBurns 22s ease-in-out infinite alternate;
+      will-change: transform;
+    }
+    @keyframes spKenBurns {
+      0%   { transform: scale(1) translate(0, 0); }
+      50%  { transform: scale(1.05) translate(-1.2%, -0.8%); }
+      100% { transform: scale(1.02) translate(0.8%, 0.6%); }
+    }
+
+    /* Soft god-ray light shafts from surface */
+    .sp-rays {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .sp-ray {
+      position: absolute;
+      top: -10%;
+      width: 2px;
+      height: 70%;
+      background: linear-gradient(to bottom, rgba(130,210,255,0.22) 0%, transparent 100%);
+      border-radius: 999px;
+      transform-origin: top center;
+      animation: rayDrift ease-in-out infinite alternate;
+    }
+    .sp-ray:nth-child(1)  { left:14%; width:60px;  transform:rotate(-8deg);  animation-duration:7s;  animation-delay:0s;   opacity:0.7; }
+    .sp-ray:nth-child(2)  { left:28%; width:30px;  transform:rotate(-3deg);  animation-duration:9s;  animation-delay:1.2s; opacity:0.5; }
+    .sp-ray:nth-child(3)  { left:44%; width:80px;  transform:rotate(2deg);   animation-duration:11s; animation-delay:0.5s; opacity:0.6; }
+    .sp-ray:nth-child(4)  { left:60%; width:40px;  transform:rotate(6deg);   animation-duration:8s;  animation-delay:2s;   opacity:0.45;}
+    .sp-ray:nth-child(5)  { left:76%; width:55px;  transform:rotate(10deg);  animation-duration:10s; animation-delay:0.8s; opacity:0.55;}
+    @keyframes rayDrift {
+      from { opacity: 0.2; transform: rotate(var(--r, -5deg)) scaleX(0.9); }
+      to   { opacity: 0.7; transform: rotate(calc(var(--r, -5deg) + 4deg)) scaleX(1.1); }
+    }
+
+    /* Subtle caustic shimmer overlay */
+    .sp-caustic {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        radial-gradient(ellipse 3px 8px at 20% 25%, rgba(150,230,255,0.08) 0%, transparent 100%),
+        radial-gradient(ellipse 5px 3px at 55% 60%, rgba(150,230,255,0.06) 0%, transparent 100%),
+        radial-gradient(ellipse 4px 10px at 80% 40%, rgba(150,230,255,0.07) 0%, transparent 100%);
+      animation: causticMove 5s ease-in-out infinite alternate;
+    }
+    @keyframes causticMove {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(6px, -4px) scale(1.03); }
+    }
+
+    /* ═══════════════════════════════════════════
+       BUBBLES
+    ═══════════════════════════════════════════ */
+    .sp-bubble {
+      position: absolute;
+      bottom: -40px;
+      border-radius: 50%;
+      /* Realistic bubble: glassy with highlight */
+      background: radial-gradient(circle at 32% 28%,
+        rgba(255,255,255,0.65) 0%,
+        rgba(180,230,255,0.25) 40%,
+        rgba(56,189,248,0.08) 100%);
+      border: 1px solid rgba(255,255,255,0.35);
+      box-shadow: inset -2px -2px 4px rgba(0,0,0,0.1),
+                  inset 1px 1px 3px rgba(255,255,255,0.3);
+      animation: bubbleRise linear infinite;
+      pointer-events: none;
+    }
+    @keyframes bubbleRise {
+      0%   { transform: translateY(0) translateX(0)   scale(1);    opacity: 0; }
+      5%   { opacity: 0.8; }
+      85%  { opacity: 0.5; }
+      100% { transform: translateY(-105vh) translateX(var(--drift,8px)) scale(0.7); opacity: 0; }
+    }
+
+    /* ═══════════════════════════════════════════
+       FISH SILHOUETTES
+    ═══════════════════════════════════════════ */
+    .sp-fish {
+      position: absolute;
+      pointer-events: none;
+      animation: fishSwim linear infinite;
+      /* natural slight wave path via vertical drift */
+    }
+    @keyframes fishSwim {
+      0%   { transform: translateX(-80px) translateY(0px); opacity: 0; }
+      5%   { opacity: 1; }
+      25%  { transform: translateX(25vw)  translateY(-8px); }
+      50%  { transform: translateX(50vw)  translateY(5px); }
+      75%  { transform: translateX(75vw)  translateY(-6px); }
+      95%  { opacity: 0.6; }
+      100% { transform: translateX(calc(100vw + 80px)) translateY(2px); opacity: 0; }
+    }
+
+    /* ═══════════════════════════════════════════
+       MAIN CONTENT
+    ═══════════════════════════════════════════ */
+    .sp-content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* Logo with breathing glow */
+    .sp-logo {
+      width: clamp(160px, 28vw, 240px);
+      height: auto;
+      filter:
+        drop-shadow(0 0 24px rgba(56,189,248,0.55))
+        drop-shadow(0 8px 24px rgba(0,0,0,0.65));
+      animation: logoFloat 4s ease-in-out infinite alternate,
+                 logoGlow  3s ease-in-out infinite alternate;
+      margin-bottom: 1.4rem;
+    }
+    @keyframes logoFloat {
+      from { transform: translateY(0px)   rotate(-0.3deg); }
+      to   { transform: translateY(-10px) rotate(0.3deg); }
+    }
+    @keyframes logoGlow {
+      from { filter: drop-shadow(0 0 18px rgba(56,189,248,0.4))  drop-shadow(0 8px 24px rgba(0,0,0,0.65)); }
+      to   { filter: drop-shadow(0 0 42px rgba(56,189,248,0.95)) drop-shadow(0 0 16px rgba(180,240,255,0.2)) drop-shadow(0 8px 24px rgba(0,0,0,0.65)); }
+    }
+
+    /* Title */
+    .sp-title {
+      font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+      font-weight: 700;
+      color: #e0f4ff;
+      letter-spacing: 3px;
+      text-shadow:
+        0 0 24px rgba(56,189,248,0.7),
+        0 2px 10px rgba(0,0,0,0.6);
+      animation: titleReveal 1.1s cubic-bezier(0.22,1,0.36,1) 0.2s both;
+    }
+    .sp-tagline {
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(0.7rem, 1.8vw, 0.88rem);
+      color: rgba(167,220,250,0.6);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-top: 0.3rem;
+      animation: titleReveal 1.1s cubic-bezier(0.22,1,0.36,1) 0.45s both;
+    }
+    @keyframes titleReveal {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Wave divider */
+    .sp-wave {
+      width: clamp(260px, 50vw, 420px);
+      height: 18px;
+      margin: 1.6rem 0 1.5rem;
+      animation: titleReveal 1s ease 0.6s both;
+      opacity: 0.5;
+    }
+
+    /* Progress bar track */
+    .sp-bar-wrap {
+      width: clamp(200px, 38vw, 320px);
+      height: 4px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      animation: titleReveal 1s ease 0.75s both;
+    }
+    .sp-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #38bdf8, #7dd3fc, #38bdf8);
+      background-size: 200% 100%;
+      box-shadow: 0 0 10px rgba(56,189,248,0.8);
+      animation: barFill 3s cubic-bezier(0.4,0,0.2,1) 0.8s forwards,
+                 barShimmer 1.5s linear 0.8s infinite;
+    }
+    @keyframes barFill {
+      0%   { width: 0%; }
+      40%  { width: 55%; }
+      70%  { width: 78%; }
+      90%  { width: 92%; }
+      100% { width: 100%; }
+    }
+    @keyframes barShimmer {
+      from { background-position: 200% 0; }
+      to   { background-position: -200% 0; }
+    }
+
+    /* Status text */
+    .sp-status {
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(0.7rem, 1.6vw, 0.82rem);
+      color: rgba(167,220,250,0.55);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: titleReveal 1s ease 0.9s both, statusCycle 3s ease 1s infinite;
+    }
+    @keyframes statusCycle {
+      0%,100% { opacity: 0.55; }
+      50%     { opacity: 0.9; }
+    }
+  </style>
 </head>
 <body>
+
+  <!-- ═══ PRE-ANGULAR OCEAN SPLASH ═══ -->
+  <div id="oq-splash" role="status" aria-label="Loading Ocean Quest Chronicles">
+
+    <!-- Layered background -->
+    <div class="sp-bg"></div>
+
+    <!-- God rays -->
+    <div class="sp-rays" aria-hidden="true">
+      <div class="sp-ray"></div>
+      <div class="sp-ray"></div>
+      <div class="sp-ray"></div>
+      <div class="sp-ray"></div>
+      <div class="sp-ray"></div>
+    </div>
+
+    <!-- Caustic shimmer -->
+    <div class="sp-caustic" aria-hidden="true"></div>
+
+    <!-- Bubbles – varied sizes, positions, timings -->
+    <div class="sp-bubble" aria-hidden="true" style="left:6%;  width:7px;  height:7px;  --drift:-6px;  animation-duration:7.2s;  animation-delay:0s;"></div>
+    <div class="sp-bubble" aria-hidden="true" style="left:13%; width:12px; height:12px; --drift:8px;   animation-duration:9.8s;  animation-delay:1.1s;"></div>
+    <div class="sp-bubble" aria-hidden="true" style="left:22%; width:5px;  height:5px;  --drift:-4px;  animation-duration:6.5s;  animation-delay:2.3s;"></div>
+    <div class="sp-bubble" aria-hidden="true" style="left:33%; width:9px;  height:9px;  --drift:10px;  animation-duration:8.4s;  animation-delay:0.4s;"></div>
+    <div class="sp-bubble" aria-hidden="true" style="left:46%; width:6px;  height:6px;  --drift:-8px;  animation-duration:7.9s;  animation-delay:3.1s;"></div>
+    <div class="sp-bubble" aria-hidden="true" style="left:55%; width:14px; height:14px; --drift:5px;   animation-duration:11s;   animation-delay:0.7s;"></div>
+    <div class="sp-bubble" aria-hidden="true" style="left:66%; width:8px;  height:8px;  --drift:-7px;  animation-duration:8.1s;  animation-delay:1.8s;"></div>
+    <div class="sp-bubble" aria-hidden="true" style="left:76%; width:5px;  height:5px;  --drift:6px;   animation-duration:6.8s;  animation-delay:0.2s;"></div>
+    <div class="sp-bubble" aria-hidden="true" style="left:85%; width:11px; height:11px; --drift:-9px;  animation-duration:10.2s; animation-delay:2.5s;"></div>
+    <div class="sp-bubble" aria-hidden="true" style="left:92%; width:4px;  height:4px;  --drift:4px;   animation-duration:5.6s;  animation-delay:1.4s;"></div>
+
+    <!-- Fish – natural wave swimming paths -->
+    <div class="sp-fish" aria-hidden="true" style="top:18%; font-size:1.5rem; animation-duration:16s;  animation-delay:0s;">🐠</div>
+    <div class="sp-fish" aria-hidden="true" style="top:62%; font-size:1.0rem; animation-duration:21s;  animation-delay:5s;">🐟</div>
+    <div class="sp-fish" aria-hidden="true" style="top:38%; font-size:1.9rem; animation-duration:26s;  animation-delay:9s; opacity:0.4;">🐡</div>
+    <div class="sp-fish" aria-hidden="true" style="top:75%; font-size:0.85rem;animation-duration:19s;  animation-delay:3s; opacity:0.3;">🐠</div>
+
+    <!-- Main centered content -->
+    <div class="sp-content">
+      <img
+        src="assets/logo/logo.png"
+        alt="Ocean Quest Chronicles"
+        class="sp-logo"
+        onerror="this.style.display='none'"
+      >
+
+      <div class="sp-title">OCEAN QUEST CHRONICLES</div>
+      <div class="sp-tagline">Deep Sea Expedition</div>
+
+      <!-- Wave SVG divider -->
+      <svg class="sp-wave" viewBox="0 0 400 18" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,9 C40,0 80,18 120,9 C160,0 200,18 240,9 C280,0 320,18 360,9 C380,4 392,13 400,9"
+              stroke="rgba(56,189,248,0.5)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <path d="M0,13 C50,5 100,18 150,11 C200,4 250,18 300,11 C340,6 375,16 400,12"
+              stroke="rgba(56,189,248,0.2)" stroke-width="1" fill="none" stroke-linecap="round"/>
+      </svg>
+
+      <!-- Progress bar -->
+      <div class="sp-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+        <div class="sp-bar-fill"></div>
+      </div>
+
+      <div class="sp-status" id="sp-status-text">Diving into the deep…</div>
+      <div class="sp-fs-hint" id="sp-fs-hint" style="margin-top: 14px; font-size: 0.84rem; color: #38bdf8; letter-spacing: 0.6px; opacity: 0.9; cursor: pointer; text-shadow: 0 0 10px rgba(56,189,248,0.5);">
+        ⛶ Tap anywhere to enter Fullscreen mode
+      </div>
+    </div>
+  </div>
+  <!-- ═══ END SPLASH ═══ -->
+
   <app-root></app-root>
+
+  <script>
+    // Rotate loading status messages naturally
+    var msgs = [
+      'Diving into the deep\u2026',
+      'Calibrating sonar array\u2026',
+      'Charting ocean sectors\u2026',
+      'Releasing the fish\u2026',
+      'Warming up the diver\u2026'
+    ];
+    var el = document.getElementById('sp-status-text');
+    var i = 0;
+    var msgTimer = setInterval(function () {
+      i = (i + 1) % msgs.length;
+      if (el) el.textContent = msgs[i];
+    }, 1400);
+
+    // Hide splash once Angular is ready AND minimum time has passed
+    (function () {
+      var splash  = document.getElementById('oq-splash');
+      // Auto-enter fullscreen on user's first click anywhere on loading screen
+      function tryFsOnClick() {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen().catch(function() {});
+        }
+      }
+      if (splash) {
+        splash.addEventListener('click', tryFsOnClick, { once: true });
+      }
+      if (!splash) return;
+      var MIN_MS  = 3400;
+      var ready   = false;
+      var elapsed = false;
+
+      function tryHide() {
+        if (!ready || !elapsed) return;
+        clearInterval(msgTimer);
+        splash.classList.add('hidden');
+        setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 950);
+      }
+
+      var obs = new MutationObserver(function () {
+        var root = document.querySelector('app-root');
+        if (root && root.children.length > 0) {
+          ready = true;
+          obs.disconnect();
+          tryHide();
+        }
+      });
+      obs.observe(document.body, { childList: true, subtree: true });
+
+      setTimeout(function () { elapsed = true; tryHide(); }, MIN_MS);
+
+      // Hard safety cap at 8 s
+      setTimeout(function () {
+        clearInterval(msgTimer);
+        splash.classList.add('hidden');
+        setTimeout(function () { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 950);
+      }, 8000);
+    })();
+  </script>
 </body>
 </html>

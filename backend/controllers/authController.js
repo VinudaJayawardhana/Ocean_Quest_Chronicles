@@ -54,14 +54,14 @@ exports.signup = async (req, res) => {
     const ip = location?.ip || req.ip || '';
 
     const inserted = await db.queryRun(
-      'INSERT INTO users (username, email, password, country, city, ip) VALUES (?, ?, ?, ?, ?, ?)',
-      [cleanName, cleanEmail, hashed, country, city, ip]
+      'INSERT INTO users (username, email, password, country, city, ip, callsign) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [cleanName, cleanEmail, hashed, country, city, ip, cleanName]
     );
     await startSession(req, { id: inserted.id, username: cleanName });
 
     res.status(201).json({
       message: 'Pilot enlisted successfully.',
-      user: { id: inserted.id, username: cleanName, email: cleanEmail, country, city }
+      user: { id: inserted.id, username: cleanName, email: cleanEmail, callsign: cleanName, country, city }
     });
   } catch (err) {
     console.error('Signup error:', err);
@@ -88,7 +88,7 @@ exports.login = async (req, res) => {
 
     res.status(200).json({
       message: 'Authentication successful.',
-      user: { id: user.id, username: user.username, email: user.email, callsign: user.callsign, country: user.country, city: user.city }
+      user: { id: user.id, username: user.username, email: user.email, callsign: user.callsign || user.username, country: user.country, city: user.city }
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -108,15 +108,18 @@ exports.logout = (req, res) => {
 // GET /api/me
 exports.getMe = async (req, res) => {
   try {
-    if (!req.session || !req.session.userId) return res.status(401).json({ error: 'Unauthenticated.' });
+    const userId = req.session?.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthenticated.' });
     const user = await db.queryGet(
       'SELECT id, username, email, callsign, avatarUrl, country, city, ip, createdAt FROM users WHERE id = ?',
-      [req.session.userId]
+      [userId]
     );
     if (!user) return res.status(404).json({ error: 'User not found.' });
-    res.status(200).json({ user });
+    
+    res.status(200).json({ user: { ...user, callsign: user.callsign || user.username } });
   } catch (err) {
     console.error('GetMe error:', err);
     res.status(500).json({ error: 'Error fetching session identity.' });
   }
 };
+

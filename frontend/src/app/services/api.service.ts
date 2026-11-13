@@ -18,12 +18,16 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  getLeaderboard(limit = 10): Observable<LeaderboardEntry[]> {
-    return this.http.get<LeaderboardEntry[]>(`${this.base}/leaderboard?limit=${limit}`);
+  getLeaderboard(limit = 20, level?: number | null): Observable<LeaderboardEntry[]> {
+    let url = `${this.base}/leaderboard?limit=${limit}`;
+    if (level !== undefined && level !== null) {
+      url += `&level=${level}`;
+    }
+    return this.http.get<LeaderboardEntry[]>(url);
   }
 
   /** The server computes the real score from the answers it verified; we only send exploration data. */
-  saveScore(data: { depthReached: number; explorationScore: number }): Observable<unknown> {
+  saveScore(data: { depthReached: number; explorationScore: number; level?: number }): Observable<unknown> {
     return this.http.post(`${this.base}/scores`, data);
   }
 
@@ -33,6 +37,11 @@ export class ApiService {
 
   updateProfile(profileData: any): Observable<any> {
     return this.http.put<any>(`${this.base}/profile`, profileData);
+  }
+
+  /** Save level clearance progression to user's persistent virtual identity on the server */
+  saveProgress(levelCleared: number): Observable<{ message: string; highestLevel: number }> {
+    return this.http.post<{ message: string; highestLevel: number }>(`${this.base}/profile/progress`, { levelCleared });
   }
 
   // ---- Sonar Challenge (Fish Game API through our server) ----

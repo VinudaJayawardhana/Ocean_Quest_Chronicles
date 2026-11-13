@@ -3,6 +3,7 @@ export interface PilotProfile {
   callsign: string;
   avatarUrl: string;
   country: string;
+  level?: number;
   city: string;
   ip?: string;
 }
@@ -14,6 +15,13 @@ export interface User {
   callsign?: string;
   country?: string;
   city?: string;
+  highestLevel?: number;
+  bestScore?: number;
+  level1Best?: number;
+  level2Best?: number;
+  level3Best?: number;
+  maxDepth?: number;
+  totalRuns?: number;
   profile?: PilotProfile; // only present in /api/profile responses
 }
 
@@ -31,5 +39,6 @@ export interface LeaderboardEntry {
   depthReached: number;
   chestsCollected: number;
   country: string;
+  level?: number;
   createdAt?: string;
 }

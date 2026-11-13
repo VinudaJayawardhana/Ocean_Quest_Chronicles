@@ -7,29 +7,28 @@ import { LocationService } from '../../services/location.service';
   selector: 'app-register',
   template: `
     <div class="ocean-screen-layout">
+      <!-- Background image layer -->
+      <div class="auth-bg-layer" style="background-image: url('assets/background/register_background/signup_image.png');" aria-hidden="true"></div>
+      <!-- Floating Fullscreen Toggle -->
+      <button 
+        type="button" 
+        class="auth-fs-toggle" 
+        (click)="toggleFullscreen()" 
+        title="Toggle Fullscreen Mode"
+      >
+        <span>{{ isFullscreen ? '🗗 Window' : '⛶ Fullscreen' }}</span>
+      </button>
+
       <div class="ocean-glass-card">
-        <!-- Logo at the top of card (Screen 2) -->
+        <!-- Logo at the top of card -->
         <div class="card-logo-wrap">
           <img src="assets/logo/logo.png" alt="Ocean Quest Chronicles" class="card-logo" />
         </div>
 
-        <h2 class="card-title">SignUp</h2>
-        <p class="card-subtitle">Enlist new pilot dossier in the naval fleet</p>
+        <h2 class="card-title">Enlist Pilot</h2>
+        <p class="card-subtitle">Create new naval dossier and pilot credentials</p>
 
         <form (ngSubmit)="onSubmit()">
-          <!-- Name Field -->
-          <div class="field-group">
-            <input 
-              type="text" 
-              id="name" 
-              [(ngModel)]="name" 
-              name="name" 
-              class="field-pill" 
-              placeholder="Name" 
-              required 
-            />
-          </div>
-
           <!-- Username Field -->
           <div class="field-group">
             <input 
@@ -38,7 +37,7 @@ import { LocationService } from '../../services/location.service';
               [(ngModel)]="username" 
               name="username" 
               class="field-pill" 
-              placeholder="Username" 
+              placeholder="Pilot Callsign / Username" 
               required 
             />
           </div>
@@ -64,7 +63,7 @@ import { LocationService } from '../../services/location.service';
               [(ngModel)]="password" 
               name="password" 
               class="field-pill" 
-              placeholder="Password" 
+              placeholder="Password (min 6 chars)" 
               required 
             />
           </div>
@@ -93,24 +92,75 @@ import { LocationService } from '../../services/location.service';
 
           <p *ngIf="errorMessage" class="error-badge">{{ errorMessage }}</p>
 
-          <!-- Coral Action Button -->
+          <!-- Buttons -->
           <div class="btn-stack" style="margin-top: 1.4rem;">
             <button type="submit" class="btn-pill btn-coral" [disabled]="loading">
-              {{ loading ? 'Enlisting...' : 'Sign Up' }}
+              {{ loading ? 'Enlisting...' : 'Sign Up & Dive' }}
             </button>
-            <a routerLink="/" class="btn-pill btn-white">
-              Back to Home
+            <a routerLink="/login" class="btn-pill btn-white">
+              Already Enlisted? Login
             </a>
           </div>
         </form>
 
         <p class="auth-switch-text">
-          Already enlisted? <a routerLink="/login">Login</a>
+          Already have a naval dossier? <a routerLink="/login">Login</a>
         </p>
       </div>
     </div>
   `,
   styles: [`
+    .auth-bg-layer {
+      position: fixed;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 0;
+      animation: authBgDrift 22s ease-in-out infinite alternate;
+    }
+
+    @keyframes authBgDrift {
+      0%   { transform: scale(1)    translate(0, 0); }
+      100% { transform: scale(1.05) translate(-1%, 0.5%); }
+    }
+
+    .ocean-glass-card {
+      position: relative;
+      z-index: 1;
+    }
+
+    .auth-fs-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 20;
+      background: rgba(3, 20, 36, 0.75);
+      border: 1.5px solid rgba(56, 189, 248, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: #c2e8fa;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.45rem 1.15rem;
+      border-radius: 9999px;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .auth-fs-toggle:hover {
+      background: rgba(14, 82, 119, 0.9);
+      border-color: #38bdf8;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+    }
+
     .location-pill-wrap {
       position: relative;
       display: flex;
@@ -158,7 +208,7 @@ import { LocationService } from '../../services/location.service';
   `]
 })
 export class RegisterComponent implements OnInit {
-  name = '';
+  isFullscreen = false;
   username = '';
   email = '';
   password = '';
@@ -183,6 +233,22 @@ export class RegisterComponent implements OnInit {
 
   ngOnInit(): void {
     this.detectLocation();
+    this.isFullscreen = !!document.fullscreenElement;
+    document.addEventListener('fullscreenchange', () => {
+      this.isFullscreen = !!document.fullscreenElement;
+    });
+  }
+
+  toggleFullscreen(): void {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().then(() => {
+        this.isFullscreen = true;
+      }).catch(() => {});
+    } else if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().then(() => {
+        this.isFullscreen = false;
+      }).catch(() => {});
+    }
   }
 
   detectLocation(): void {
@@ -206,6 +272,10 @@ export class RegisterComponent implements OnInit {
     }
     this.loading = true;
     this.errorMessage = '';
+    // Ensure fullscreen on submit
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
 
     const payload = {
       username: this.username,
@@ -221,7 +291,7 @@ export class RegisterComponent implements OnInit {
     this.authService.register(payload).subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigate(['/game']);
+        this.router.navigate(['/home']);
       },
       error: (err) => {
         this.loading = false;

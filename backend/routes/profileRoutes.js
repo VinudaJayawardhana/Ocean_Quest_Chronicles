@@ -9,5 +9,6 @@ const profileController = require('../controllers/profileController');
 
 router.get('/', profileController.getProfile);
 router.put('/', profileController.updateProfile);
+router.post('/progress', profileController.saveProgress);
 
 module.exports = router;

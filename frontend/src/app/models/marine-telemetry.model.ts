@@ -17,7 +17,7 @@ export interface MarineTelemetry {
   waveHeight: number; // in meters
   currentSpeedKmH: number; // in km/h
   isNightDive: boolean;
-  ambientLighting: 'day' | 'golden_hour' | 'night';
+  ambientLighting: 'day' | 'golden_hour' | 'sunset' | 'night';
   sunriseTime: string;
   sunsetTime: string;
   climateWarning?: string;

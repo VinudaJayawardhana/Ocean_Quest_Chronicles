@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { SoundService } from '../../services/sound.service';
+import { MarineService } from '../../services/marine.service';
 
 @Component({
   selector: 'app-settings-modal',
@@ -9,7 +10,7 @@ import { SoundService } from '../../services/sound.service';
       <div class="ocean-glass-card settings-card" (click)="$event.stopPropagation()">
         <!-- Header -->
         <h2 class="card-title">
-          <span class="icon">⚙</span> GAME SETTINGS
+          <span class="icon">⚙️</span> GAME SETTINGS
         </h2>
 
         <div class="settings-body">
@@ -22,7 +23,7 @@ import { SoundService } from '../../services/sound.service';
                 min="0" 
                 max="100" 
                 [(ngModel)]="masterVolume" 
-                (change)="applyAudioSettings()" 
+                (input)="applyAudioSettings()" (change)="applyAudioSettings()" 
                 class="ocean-slider"
               />
               <span class="setting-value">{{ masterVolume }}%</span>
@@ -38,10 +39,45 @@ import { SoundService } from '../../services/sound.service';
                 min="0" 
                 max="100" 
                 [(ngModel)]="musicVolume" 
-                (change)="applyAudioSettings()" 
+                (input)="applyAudioSettings()" (change)="applyAudioSettings()" 
                 class="ocean-slider"
               />
               <span class="setting-value">{{ musicVolume }}%</span>
+            </div>
+          </div>
+
+          <!-- Dive Atmosphere / Solar Cycle (Sunrise-Sunset API) -->
+          <div class="setting-row setting-row-stacked">
+            <span class="setting-label">🌅 EXPEDITION SOLAR CYCLE (SUNSET API)</span>
+            <div class="graphics-segmented-control solar-seg-control">
+              <button 
+                type="button"
+                class="segment-pill" 
+                [class.active]="solarCycle === 'auto'" 
+                (click)="setSolarCycle('auto')"
+                title="Live Astronomical Telemetry via Sunrise-Sunset API"
+              >🌐 LIVE API</button>
+              <button 
+                type="button"
+                class="segment-pill" 
+                [class.active]="solarCycle === 'day'" 
+                (click)="setSolarCycle('day')"
+                title="Sunny Tropical Reef Dive"
+              >☀️ DAY</button>
+              <button 
+                type="button"
+                class="segment-pill" 
+                [class.active]="solarCycle === 'sunset'" 
+                (click)="setSolarCycle('sunset')"
+                title="Golden Hour Sunset Reef Dive"
+              >🌅 SUNSET</button>
+              <button 
+                type="button"
+                class="segment-pill" 
+                [class.active]="solarCycle === 'night'" 
+                (click)="setSolarCycle('night')"
+                title="Bioluminescent Abyssal Night Dive"
+              >🌙 NIGHT</button>
             </div>
           </div>
 
@@ -220,6 +256,26 @@ import { SoundService } from '../../services/sound.service';
       transition: all 0.2s ease;
     }
 
+    .setting-row-stacked {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .solar-seg-control {
+      width: 100%;
+      display: flex;
+    }
+
+    .solar-seg-control .segment-pill {
+      flex: 1;
+      font-size: 0.72rem;
+      padding: 0.42rem 0.25rem;
+      text-align: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
     .segment-pill.active {
       background: #ff7b54;
       color: #ffffff;
@@ -275,19 +331,29 @@ export class SettingsModalComponent implements OnInit {
   musicVolume = 70;
   graphicsQuality: 'low' | 'medium' | 'high' = 'medium';
   isFullscreen = false;
+  solarCycle: 'auto' | 'day' | 'sunset' | 'night' = 'auto';
 
   constructor(
     private router: Router,
-    private soundService: SoundService
+    public soundService: SoundService,
+    public marineService: MarineService
   ) {}
 
   ngOnInit(): void {
     // Restore saved preferences
     const savedMaster = localStorage.getItem('oq_master_vol');
-    if (savedMaster) this.masterVolume = parseInt(savedMaster, 10);
+    if (savedMaster !== null) {
+      this.masterVolume = parseInt(savedMaster, 10);
+    } else {
+      this.masterVolume = Math.round(this.soundService.masterVolume * 100);
+    }
 
     const savedMusic = localStorage.getItem('oq_music_vol');
-    if (savedMusic) this.musicVolume = parseInt(savedMusic, 10);
+    if (savedMusic !== null) {
+      this.musicVolume = parseInt(savedMusic, 10);
+    } else {
+      this.musicVolume = Math.round(this.soundService.musicVolume * 100);
+    }
 
     const savedGfx = localStorage.getItem('oq_graphics');
     if (savedGfx === 'low' || savedGfx === 'medium' || savedGfx === 'high') {
@@ -295,6 +361,12 @@ export class SettingsModalComponent implements OnInit {
     }
 
     this.isFullscreen = !!document.fullscreenElement;
+    this.solarCycle = this.marineService.solarMode;
+  }
+
+  setSolarCycle(cycle: 'auto' | 'day' | 'sunset' | 'night'): void {
+    this.solarCycle = cycle;
+    this.marineService.setSolarMode(cycle);
   }
 
   setGraphics(q: 'low' | 'medium' | 'high'): void {
@@ -318,13 +390,8 @@ export class SettingsModalComponent implements OnInit {
   }
 
   applyAudioSettings(): void {
-    localStorage.setItem('oq_master_vol', String(this.masterVolume));
-    localStorage.setItem('oq_music_vol', String(this.musicVolume));
-    if (this.masterVolume === 0 && !this.soundService.isMuted) {
-      this.soundService.toggleMute();
-    } else if (this.masterVolume > 0 && this.soundService.isMuted) {
-      this.soundService.toggleMute();
-    }
+    this.soundService.setMasterVolume(this.masterVolume);
+    this.soundService.setMusicVolume(this.musicVolume);
   }
 
   saveAndResume(): void {

@@ -8,7 +8,7 @@ import { AuthService } from '../../services/auth.service';
   template: `
     <div class="ocean-screen-layout">
       <div class="ocean-glass-card wide">
-        <!-- Header (Screen 13) -->
+        <!-- Header -->
         <h2 class="card-title">
           <span class="dossier-icon">🤿</span> PILOT PROFILE DOSSIER
         </h2>
@@ -20,11 +20,30 @@ import { AuthService } from '../../services/auth.service';
         </div>
 
         <div *ngIf="!loading && profile" class="dossier-content">
+          <!-- Diver Avatar Hero Portrait (DiceBear Avatar Virtual Identity) -->
+          <div class="profile-hero-portrait-wrap">
+            <div class="hero-avatar-ring">
+              <img [src]="authService.getDiverAvatar(profile?.username)" alt="Diver Avatar" class="profile-hero-avatar-img" (error)="authService.handleAvatarError($event)" />
+            </div>
+            <div class="hero-callsign-info">
+              <span class="hero-id-tag">OPERATIVE DOSSIER</span>
+              <h3 class="hero-callsign-title">{{ profile?.profile?.callsign || profile?.callsign || profile?.username || 'Naval Diver' }}</h3>
+            </div>
+          </div>
+
           <!-- Top Section -->
           <div class="stat-list">
             <div class="stat-item">
-              <span class="stat-label">CALL-SIGN</span>
-              <span class="stat-val">{{ profile?.profile?.callsign || profile?.username || 'DeepDiver_99' }}</span>
+              <span class="stat-label">PILOT CALL-SIGN</span>
+              <span class="stat-val highlight">{{ profile?.profile?.callsign || profile?.callsign || profile?.username || 'Naval Diver' }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">USERNAME</span>
+              <span class="stat-val">{{ profile?.username || 'Enlisted' }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">REGISTERED EMAIL</span>
+              <span class="stat-val">{{ profile?.email || 'N/A' }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">DIVER CLASS</span>
@@ -35,7 +54,7 @@ import { AuthService } from '../../services/auth.service';
             <div class="stat-item">
               <span class="stat-label">PILOT BASE</span>
               <span class="stat-val location-val">
-                📍 {{ profile?.profile?.city || 'Colombo' }}, {{ profile?.profile?.country || 'Sri Lanka' }} 🇱🇰
+                📍 {{ profile?.profile?.city || profile?.city || 'Colombo' }}, {{ profile?.profile?.country || profile?.country || 'Sri Lanka' }} 🇱🇰
               </span>
             </div>
           </div>
@@ -46,12 +65,24 @@ import { AuthService } from '../../services/auth.service';
           <!-- Performance History -->
           <div class="stat-list">
             <div class="stat-item">
-              <span class="stat-label">PERSONAL BEST</span>
+              <span class="stat-label">OVERALL PERSONAL BEST</span>
               <span class="stat-val highlight">{{ personalBest }} PTS</span>
             </div>
             <div class="stat-item">
+              <span class="stat-label">🦈 LEVEL 1 (SHARKS) BEST</span>
+              <span class="stat-val">{{ level1Best }} PTS</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">🏴‍☠️ LEVEL 2 (PIRATES) BEST</span>
+              <span class="stat-val">{{ level2Best }} PTS</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">🐙 LEVEL 3 (ABYSS) BEST</span>
+              <span class="stat-val">{{ level3Best }} PTS</span>
+            </div>
+            <div class="stat-item">
               <span class="stat-label">HIGHEST LEVEL</span>
-              <span class="stat-val">Level 2 (Pirate Cove)</span>
+              <span class="stat-val">{{ highestLevelName }}</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">TOTAL RUNS</span>
@@ -59,7 +90,7 @@ import { AuthService } from '../../services/auth.service';
             </div>
           </div>
 
-          <!-- Action Buttons (Screen 13: Edit Profile & Main Menu) -->
+          <!-- Action Buttons -->
           <div class="btn-row" style="margin-top: 2rem;">
             <button class="btn-pill btn-coral" (click)="openEditModal()">
               EDIT PROFILE
@@ -71,8 +102,8 @@ import { AuthService } from '../../services/auth.service';
 
           <!-- Log Out Option -->
           <div class="logout-link-wrap">
-            <button class="btn-deauth" (click)="onLogout()">
-              De-authorize & Log Out
+            <button class="btn-deauth-pill" (click)="onLogout()">
+              <span class="logout-icon">🚪</span> Logout
             </button>
           </div>
         </div>
@@ -146,6 +177,59 @@ import { AuthService } from '../../services/auth.service';
       font-size: 1.5rem;
     }
 
+    .profile-hero-portrait-wrap {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      padding: 0.9rem 1.1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 18px;
+      margin-bottom: 1.2rem;
+    }
+
+    .hero-avatar-ring {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #021327;
+      border: 2.5px solid #38bdf8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .profile-hero-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-callsign-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+    }
+
+    .hero-id-tag {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: #38bdf8;
+      text-transform: uppercase;
+    }
+
+    .hero-callsign-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+    }
+
     .dossier-content {
       margin-top: 1rem;
     }
@@ -192,23 +276,49 @@ import { AuthService } from '../../services/auth.service';
     }
 
     .logout-link-wrap {
-      margin-top: 1.6rem;
+      margin-top: 1.8rem;
       text-align: center;
+      padding-top: 1.2rem;
+      border-top: 1px dashed rgba(255, 255, 255, 0.16);
     }
 
-    .btn-deauth {
-      background: none;
-      border: none;
-      color: #ff7b54;
+    .btn-deauth-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.55rem;
+      width: auto;
+      min-width: 180px;
+      padding: 0.65rem 1.6rem;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1.5px solid rgba(239, 68, 68, 0.55);
+      border-radius: 9999px;
+      color: #fca5a5;
+      font-family: inherit;
       font-size: 0.88rem;
       font-weight: 700;
+      letter-spacing: 0.8px;
       cursor: pointer;
-      text-decoration: underline;
-      transition: color 0.2s;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    .btn-deauth:hover {
-      color: #ff5238;
+    .btn-deauth-pill:hover {
+      background: rgba(239, 68, 68, 0.35);
+      border-color: #ef4444;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(239, 68, 68, 0.45);
+    }
+
+    .btn-deauth-pill:active {
+      transform: translateY(1px);
+    }
+
+    .logout-icon {
+      font-size: 1.1rem;
     }
 
     /* Edit Modal */
@@ -250,8 +360,12 @@ export class ProfileComponent implements OnInit {
   isEditModalOpen = false;
 
   diverClass = '⚡ Speedster';
-  personalBest = 1850;
-  totalRuns = 14;
+  personalBest = 0;
+  level1Best = 0;
+  level2Best = 0;
+  level3Best = 0;
+  totalRuns = 0;
+  highestLevelName = 'Level 1 - Shark Waters';
 
   // Edit fields
   editCallsign = '';
@@ -261,42 +375,94 @@ export class ProfileComponent implements OnInit {
 
   constructor(
     private apiService: ApiService,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
+    // 1. Immediately load local active user to prevent delay or blank display
+    const activeUser = this.authService.getCurrentUser();
+    if (activeUser) {
+      this.profile = {
+        username: activeUser.username,
+        email: activeUser.email,
+        callsign: activeUser.callsign || activeUser.username,
+        country: activeUser.country || 'Sri Lanka',
+        city: activeUser.city || 'Colombo',
+        profile: {
+          callsign: activeUser.callsign || activeUser.username,
+          country: activeUser.country || 'Sri Lanka',
+          city: activeUser.city || 'Colombo'
+        }
+      };
+      this.editCallsign = activeUser.callsign || activeUser.username;
+      this.editCity = activeUser.city || 'Colombo';
+      this.editCountry = activeUser.country || 'Sri Lanka';
+      this.loading = false;
+    }
+
     const savedClass = localStorage.getItem('oq_diver_class');
     if (savedClass) this.diverClass = savedClass;
 
     const savedBest = localStorage.getItem('ocean_quest_best_score');
     if (savedBest) this.personalBest = parseInt(savedBest, 10);
+    const savedL1 = localStorage.getItem('ocean_quest_level1_best');
+    if (savedL1) this.level1Best = parseInt(savedL1, 10);
+    const savedL2 = localStorage.getItem('ocean_quest_level2_best');
+    if (savedL2) this.level2Best = parseInt(savedL2, 10);
+    const savedL3 = localStorage.getItem('ocean_quest_level3_best');
+    if (savedL3) this.level3Best = parseInt(savedL3, 10);
 
     const savedRuns = localStorage.getItem('oq_total_runs');
     if (savedRuns) this.totalRuns = parseInt(savedRuns, 10);
 
+    const savedLvl = localStorage.getItem('ocean_quest_highest_level_cleared');
+    const lvlNum = savedLvl ? parseInt(savedLvl, 10) : 0;
+    if (lvlNum >= 3) this.highestLevelName = 'Level 3 - Abyss Trench (Mastered)';
+    else if (lvlNum === 2) this.highestLevelName = 'Level 3 - Abyss Trench (Unlocked)';
+    else if (lvlNum === 1) this.highestLevelName = 'Level 2 - Pirate Cove';
+    else this.highestLevelName = 'Level 1 - Shark Waters';
+
+    // 2. Fetch server database record
     this.apiService.getProfile().subscribe({
       next: (data) => {
         this.profile = data;
         this.loading = false;
-        this.editCallsign = data?.profile?.callsign || data?.username || '';
-        this.editCity = data?.profile?.city || 'Colombo';
-        this.editCountry = data?.profile?.country || 'Sri Lanka';
+        this.editCallsign = data?.profile?.callsign || data?.callsign || data?.username || '';
+        this.editCity = data?.profile?.city || data?.city || 'Colombo';
+        this.editCountry = data?.profile?.country || data?.country || 'Sri Lanka';
+                if (data?.bestScore !== undefined) {
+          this.personalBest = data.bestScore || 0;
+          localStorage.setItem('ocean_quest_best_score', String(this.personalBest));
+        }
+        if (data?.level1Best !== undefined) {
+          this.level1Best = data.level1Best || 0;
+          localStorage.setItem('ocean_quest_level1_best', String(this.level1Best));
+        }
+        if (data?.level2Best !== undefined) {
+          this.level2Best = data.level2Best || 0;
+          localStorage.setItem('ocean_quest_level2_best', String(this.level2Best));
+        }
+        if (data?.level3Best !== undefined) {
+          this.level3Best = data.level3Best || 0;
+          localStorage.setItem('ocean_quest_level3_best', String(this.level3Best));
+        }
+        if (data?.totalRuns !== undefined) {
+          this.totalRuns = data.totalRuns || 0;
+          localStorage.setItem('oq_total_runs', String(this.totalRuns));
+        }
+        if (data?.highestLevel !== undefined) {
+          const lvl = data.highestLevel;
+          if (lvl >= 3) this.highestLevelName = 'Level 3 - Abyss Trench (Mastered)';
+          else if (lvl === 2) this.highestLevelName = 'Level 3 - Abyss Trench (Unlocked)';
+          else if (lvl === 1) this.highestLevelName = 'Level 2 - Pirate Cove';
+          else this.highestLevelName = 'Level 1 - Shark Waters';
+          localStorage.setItem('ocean_quest_highest_level_cleared', String(lvl));
+        }
       },
       error: () => {
         this.loading = false;
-        // Mock fallback if session demo
-        this.profile = {
-          username: 'DeepDiver_99',
-          profile: {
-            callsign: 'DeepDiver_99',
-            city: 'Colombo',
-            country: 'Sri Lanka'
-          }
-        };
-        this.editCallsign = 'DeepDiver_99';
-        this.editCity = 'Colombo';
-        this.editCountry = 'Sri Lanka';
+        // Never override with fake dummy data
       }
     });
   }
@@ -324,6 +490,14 @@ export class ProfileComponent implements OnInit {
         this.profile = updated;
         this.diverClass = this.editDiverClass;
         localStorage.setItem('oq_diver_class', this.diverClass);
+        // Also update local user cache
+        const u = this.authService.getCurrentUser();
+        if (u) {
+          u.callsign = this.editCallsign;
+          u.city = this.editCity;
+          u.country = this.editCountry;
+          localStorage.setItem('ocean_quest_user', JSON.stringify(u));
+        }
         this.closeEditModal();
       },
       error: () => {
@@ -333,6 +507,9 @@ export class ProfileComponent implements OnInit {
           this.profile.profile.callsign = this.editCallsign;
           this.profile.profile.city = this.editCity;
           this.profile.profile.country = this.editCountry;
+          this.profile.callsign = this.editCallsign;
+          this.profile.city = this.editCity;
+          this.profile.country = this.editCountry;
         }
         this.diverClass = this.editDiverClass;
         localStorage.setItem('oq_diver_class', this.diverClass);
@@ -347,6 +524,6 @@ export class ProfileComponent implements OnInit {
   }
 
   goToMenu(): void {
-    this.router.navigate(['/']);
+    this.router.navigate(['/home']);
   }
 }

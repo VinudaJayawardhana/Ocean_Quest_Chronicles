@@ -13,8 +13,7 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  min-height: 600px;
-  background: #021124;
+    background: #021124;
   overflow: hidden;
   user-select: none;
 }
@@ -111,6 +110,34 @@
 @keyframes pulseDanger {
   from { filter: brightness(1) drop-shadow(0 0 4px rgba(255, 82, 56, 0.5)); }
   to { filter: brightness(1.35) drop-shadow(0 0 12px rgba(255, 82, 56, 0.9)); }
+}
+
+.hud-pilot-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(3, 20, 36, 0.78);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  padding: 0.22rem 0.65rem;
+  border-radius: 9999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  width: fit-content;
+}
+
+.hud-pilot-avatar-img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #38bdf8;
+  background: #021327;
+  flex-shrink: 0;
+}
+
+.hud-pilot-callsign {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
 }
 
 /* 10-Digit Arcade Score */
@@ -265,6 +292,25 @@
   border-radius: 9999px;
   padding: 3px 5px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Sunset / Golden Hour Dive Atmospheric Mode (Sunrise-Sunset API) */
+.viewport-wrapper.sunset-dive {
+  background: #1c0e17;
+}
+
+.viewport-wrapper.sunset-dive .water-light-overlay {
+  background: radial-gradient(circle at 50% 15%, rgba(251, 146, 60, 0.32) 0%, rgba(180, 83, 9, 0.35) 60%, rgba(15, 23, 42, 0.75) 100%);
+}
+
+.viewport-wrapper.sunset-dive .bg-scene-iframe {
+  filter: brightness(0.88) contrast(1.15) sepia(0.28) hue-rotate(-12deg);
+}
+
+.telemetry-mode.sunset {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
 }
 
 /* Night Dive Atmospheric Mode */
@@ -569,8 +615,18 @@
   width: 140px;
   height: 140px;
   background-repeat: no-repeat;
-  background-size: 1120px 140px !important; /* 8 frames * 140px */
+  background-size: 1120px 140px !important;
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+}
+
+@media (max-width: 768px) {
+  .pirate-entity {
+    transform: translate(-50%, -50%) scale(0.72) !important;
+  }
+  .detection-sonar-ring.pirate-ring {
+    max-width: 50vw;
+    max-height: 50vw;
+  }
 }
 
 /* ─── Level 3: Octopus Entity ──────────────────────────────────────────── */
@@ -655,6 +711,28 @@
   font-size: 0.65rem;
   font-weight: 800;
   color: #032b49;
+}
+
+
+/* Sonar Beacon Wave for Procedural Mystery Box */
+.chest-sonar-beacon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 65px;
+  height: 65px;
+  border: 2px solid rgba(251, 191, 36, 0.55);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: chestBeaconPing 2.4s ease-out infinite;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.35);
+}
+
+@keyframes chestBeaconPing {
+  0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0.9; }
+  75%  { opacity: 0.35; }
+  100% { transform: translate(-50%, -50%) scale(2.5); opacity: 0; }
 }
 
 /* Sunken Treasure Chests */
@@ -1125,6 +1203,39 @@
 
 .modal-center-card {
   animation: scaleIn 0.25s ease-out;
+  max-height: 92vh;
+  overflow-y: auto;
+  max-width: 520px;
+  width: 100%;
+}
+
+.modal-center-card .btn-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 1.2rem;
+}
+
+.modal-center-card .btn-row .btn-pill {
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 440px) {
+  .modal-center-card .btn-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bg-scene-iframe.game-stopped {
+  filter: blur(6px) brightness(0.4);
+  pointer-events: none;
 }
 
 @keyframes fadeIn {
@@ -1235,4 +1346,285 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Screen 6-A: Sonar Chest 3-2-1 Countdown Overlay
+   ========================================================================== */
+.chest-countdown-overlay {
+  z-index: 105;
+  background: radial-gradient(circle at center, rgba(3, 27, 54, 0.9) 0%, rgba(1, 10, 20, 0.96) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.sonar-countdown-card {
+  position: relative;
+  max-width: 440px;
+  width: 90%;
+  padding: 2.2rem 1.8rem;
+  text-align: center;
+  border-radius: 28px;
+  background: rgba(8, 38, 70, 0.88);
+  border: 2px solid rgba(56, 189, 248, 0.55);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(56, 189, 248, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Pulsing radar rings in background of card */
+.sonar-radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  pointer-events: none;
+  animation: sonarRingPing 2.4s infinite ease-out;
+}
+.sonar-radar-ring.ring-1 {
+  width: 140px;
+  height: 140px;
+  animation-delay: 0s;
+}
+.sonar-radar-ring.ring-2 {
+  width: 240px;
+  height: 240px;
+  animation-delay: 0.8s;
+}
+.sonar-radar-ring.ring-3 {
+  width: 340px;
+  height: 340px;
+  animation-delay: 1.6s;
+}
+
+@keyframes sonarRingPing {
+  0% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+}
+
+.sonar-badge-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(14, 165, 233, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.6);
+  padding: 0.35rem 1.1rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #38bdf8;
+  text-transform: uppercase;
+  margin-bottom: 0.85rem;
+  z-index: 2;
+}
+
+.sonar-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 10px #38bdf8;
+  animation: pulseDotAnim 1s infinite alternate;
+}
+
+@keyframes pulseDotAnim {
+  from { opacity: 0.4; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1.3); }
+}
+
+.sonar-countdown-heading {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  margin: 0 0 0.35rem 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  z-index: 2;
+}
+
+.sonar-countdown-sub {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0 0 1.6rem 0;
+  z-index: 2;
+}
+
+/* Glowing central circular digit display */
+.sonar-digit-circle {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.25) 0%, rgba(2, 17, 34, 0.95) 80%);
+  border: 3px solid #38bdf8;
+  box-shadow: 0 0 35px rgba(56, 189, 248, 0.65), inset 0 0 25px rgba(56, 189, 248, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.6rem;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.sonar-sweep-beam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(56, 189, 248, 0.45) 60deg, transparent 65deg);
+  animation: rotateSweepBeam 1.6s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes rotateSweepBeam {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.sonar-countdown-number {
+  font-size: 4.8rem;
+  font-weight: 900;
+  font-family: 'Courier New', monospace, sans-serif;
+  color: #ffedd5;
+  text-shadow: 0 0 20px #ff6b4a, 0 0 45px #ff3838, 0 4px 10px rgba(0, 0, 0, 0.8);
+  animation: digitPopAnim 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite;
+  z-index: 3;
+  line-height: 1;
+}
+
+@keyframes digitPopAnim {
+  0% {
+    transform: scale(0.65);
+    opacity: 0.3;
+  }
+  40% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0.85;
+  }
+}
+
+.sonar-prep-instruction {
+  background: rgba(2, 17, 34, 0.75);
+  border: 1px dashed rgba(251, 146, 60, 0.55);
+  border-radius: 12px;
+  padding: 0.6rem 1.2rem;
+  color: #fdba74;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  z-index: 2;
+}
+
+
+/* Right Controls & Shrink/Collapse Feature */
+.hud-right-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  justify-self: end;
+  flex-wrap: nowrap;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hud-collapsible-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: fadeInRight 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.hud-collapse-btn {
+  background: rgba(3, 20, 36, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #7dd3fc;
+  border-radius: 9999px;
+  padding: 0.34rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: all 0.22s ease;
+  user-select: none;
+}
+
+.hud-collapse-btn:hover {
+  background: rgba(14, 82, 119, 0.85);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+}
+
+.hud-collapse-btn .collapse-icon {
+  font-size: 0.68rem;
+  color: #38bdf8;
+}
+
+.hud-shrunk-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(3, 20, 36, 0.82);
+  border: 1.5px solid rgba(56, 189, 248, 0.5);
+  border-radius: 9999px;
+  padding: 0.38rem 0.85rem;
+  color: #c2e8fa;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(56, 189, 248, 0.2);
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: fadeIn 0.25s ease both;
+}
+
+.hud-shrunk-pill:hover {
+  border-color: #38bdf8;
+  color: #ffffff;
+  background: rgba(14, 82, 119, 0.85);
+  transform: scale(1.04);
+}
+
+.hud-shrunk-pill .shrunk-sep {
+  opacity: 0.4;
+}
+
+.hud-shrunk-pill .shrunk-gear {
+  font-size: 0.85rem;
+  margin-left: 2px;
 }

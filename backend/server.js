@@ -31,7 +31,17 @@ if (!secret) {
   console.warn('[warn] SESSION_SECRET not set - using a random one (sessions reset on restart). See .env.example');
 }
 
-app.use(cors({ origin: ['http://localhost:4200', 'http://127.0.0.1:4200'], credentials: true }));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Dev-friendly fallback
+    },
+    credentials: true
+  })
+);
 app.use(express.json());
 app.use(
   session({

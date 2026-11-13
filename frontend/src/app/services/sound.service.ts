@@ -10,15 +10,43 @@ import { GameEventBus, GameEvent } from './event-bus.service';
 })
 export class SoundService {
   private audioCtx: AudioContext | null = null;
+  private masterGainNode: GainNode | null = null;
+  private sfxGainNode: GainNode | null = null;
+
   public isMuted: boolean = false;
+  public masterVolume: number = 0.5; // 0.0 to 1.0
+  public musicVolume: number = 0.7;  // 0.0 to 1.0
+  public sfxVolume: number = 0.7;    // 0.0 to 1.0
+  public voicePersona: 'commander' | 'tactical' | 'robotic' = 'commander';
+
   private bgmAudio: HTMLAudioElement | null = null;
   public isBgmPlaying: boolean = false;
 
   constructor(private bus: GameEventBus) {
     // EVENT-DRIVEN: sounds are reactions to game events; the engine does not call this service.
     this.bus.events$.subscribe((e) => this.onGameEvent(e));
-    const saved = localStorage.getItem('ocean_quest_muted');
-    this.isMuted = saved === 'true';
+    
+    // Restore saved volume and mute states
+    const savedMuted = localStorage.getItem('ocean_quest_muted');
+    this.isMuted = savedMuted === 'true';
+
+    const savedMaster = localStorage.getItem('oq_master_vol');
+    if (savedMaster !== null) {
+      this.masterVolume = Math.max(0, Math.min(100, parseInt(savedMaster, 10))) / 100;
+    }
+
+    const savedMusic = localStorage.getItem('oq_music_vol');
+    if (savedMusic !== null) {
+      const vol = Math.max(0, Math.min(100, parseInt(savedMusic, 10))) / 100;
+      this.musicVolume = vol;
+      this.sfxVolume = vol;
+    }
+
+    const savedPersona = localStorage.getItem('oq_voice_persona') as 'commander' | 'tactical' | 'robotic' | null;
+    if (savedPersona === 'commander' || savedPersona === 'tactical' || savedPersona === 'robotic') {
+      this.voicePersona = savedPersona;
+    }
+
     this.initBgm();
   }
 
@@ -26,10 +54,18 @@ export class SoundService {
     try {
       this.bgmAudio = new Audio('assets/audio/ocean_ambient_bgm.wav');
       this.bgmAudio.loop = true;
-      this.bgmAudio.volume = 0.28; // soothing ambient background level
+      this.updateBgmVolume();
     } catch {
       // Audio element not supported
     }
+  }
+
+  private updateBgmVolume(): void {
+    if (!this.bgmAudio) return;
+    const effectiveMaster = this.isMuted ? 0 : this.masterVolume;
+    const effectiveMusic = this.isMuted ? 0 : this.musicVolume;
+    // Scale 0.35 ceiling so background music stays soothing underneath SFX
+    this.bgmAudio.volume = Math.max(0, Math.min(1, 0.35 * effectiveMusic * effectiveMaster));
   }
 
   /**
@@ -75,6 +111,11 @@ export class SoundService {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (AudioContextClass) {
         this.audioCtx = new AudioContextClass();
+        this.masterGainNode = this.audioCtx.createGain();
+        this.sfxGainNode = this.audioCtx.createGain();
+        this.sfxGainNode.connect(this.masterGainNode);
+        this.masterGainNode.connect(this.audioCtx.destination);
+        this.updateVolumes();
       }
     }
     if (this.audioCtx && this.audioCtx.state === 'suspended') {
@@ -82,21 +123,160 @@ export class SoundService {
     }
   }
 
+  public updateVolumes(): void {
+    const effectiveMaster = this.isMuted ? 0 : this.masterVolume;
+    const effectiveSfx = this.isMuted ? 0 : this.sfxVolume;
+
+    if (this.audioCtx) {
+      const now = this.audioCtx.currentTime;
+      if (this.masterGainNode) {
+        this.masterGainNode.gain.cancelScheduledValues(now);
+        this.masterGainNode.gain.setValueAtTime(effectiveMaster, now);
+      }
+      if (this.sfxGainNode) {
+        this.sfxGainNode.gain.cancelScheduledValues(now);
+        this.sfxGainNode.gain.setValueAtTime(effectiveSfx, now);
+      }
+    }
+
+    this.updateBgmVolume();
+  }
+
+  public setMasterVolume(percent: number): void {
+    const val = Math.max(0, Math.min(100, percent));
+    this.masterVolume = val / 100;
+    localStorage.setItem('oq_master_vol', String(val));
+
+    if (val === 0 && !this.isMuted) {
+      this.isMuted = true;
+      localStorage.setItem('ocean_quest_muted', 'true');
+      this.stopBgm();
+    } else if (val > 0 && this.isMuted) {
+      this.isMuted = false;
+      localStorage.setItem('ocean_quest_muted', 'false');
+      this.startBgm();
+    }
+    this.updateVolumes();
+  }
+
+  public setVoicePersona(persona: 'commander' | 'tactical' | 'robotic'): void {
+    this.voicePersona = persona;
+    localStorage.setItem('oq_voice_persona', persona);
+  }
+
+  public setMusicVolume(percent: number): void {
+    const val = Math.max(0, Math.min(100, percent));
+    this.musicVolume = val / 100;
+    this.sfxVolume = val / 100;
+    localStorage.setItem('oq_music_vol', String(val));
+    this.updateVolumes();
+  }
+
+  private connectToDestination(gain: GainNode): void {
+    if (this.sfxGainNode) {
+      gain.connect(this.sfxGainNode);
+    } else if (this.audioCtx) {
+      this.connectToDestination(gain);
+    }
+  }
+
   private onGameEvent(e: GameEvent): void {
     switch (e.type) {
       case 'Swim': return this.playSwim();
       case 'BubbleCollected': return this.playBubble();
-      case 'SharkBite': return this.playSharkBite();
+      case 'SharkBite': 
+        this.playSharkBite();
+        return;
       case 'SwordSlash':
       case 'GuardAttack': return this.playSwordSlash();
       case 'OctopusAttack':
       case 'DiverHurt': return this.playHurt();
-      case 'ChestUnlocked': return this.playChestUnlock();
+      case 'ChestUnlocked': 
+        this.playChestUnlock();
+        this.speakNavalDispatch('Mystery cargo unlocked.');
+        return;
       case 'PuzzleRequested':
+        this.playAlertPing();
+        this.speakNavalDispatch('Sonar cipher linked.');
+        return;
       case 'LevelChanged': return this.playAlertPing();
-      case 'GameOver': return this.playGameOver();
+      case 'GameOver': 
+        this.stopBgm(); 
+        this.playGameOver();
+        this.speakNavalDispatch('Warning. Mission compromised.', true);
+        return;
       default: return;
     }
+  }
+
+  /**
+   * NAVAL RADIO DISPATCH VOICE COMMUNICATOR (Automated Submarine Comms)
+   * Uses Web Speech Synthesis API with naval radio squelch audio filter.
+   * Fully decoupled and respects global audio mute state.
+   */
+  speakNavalDispatch(message: string, isAlert: boolean = false): void {
+    if (this.isMuted) return;
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    try {
+      window.speechSynthesis.cancel();
+      this.playRadioSquelch();
+
+      const utterance = new SpeechSynthesisUtterance(message);
+      const voices = window.speechSynthesis.getVoices();
+
+      if (this.voicePersona === 'tactical') {
+        // Crisp Tactical Comms AI Officer (Female English tone)
+        utterance.rate = 1.08;
+        utterance.pitch = isAlert ? 1.25 : 1.10;
+        const tacticalVoice = voices.find(v => v.lang.startsWith('en') && (
+          v.name.includes('Zira') || v.name.includes('Aria') || v.name.includes('Google UK English Female') || 
+          v.name.includes('Samantha') || v.name.includes('Female') || v.name.includes('Jenny')
+        ));
+        if (tacticalVoice) utterance.voice = tacticalVoice;
+      } else if (this.voicePersona === 'robotic') {
+        // Cybernetic Sonar Dispatcher (Low mechanical cadence)
+        utterance.rate = 1.14;
+        utterance.pitch = isAlert ? 0.8 : 0.62;
+        const roboticVoice = voices.find(v => v.lang.startsWith('en') && (
+          v.name.includes('Robo') || v.name.includes('Natural') || v.name.includes('Google US English') ||
+          v.name.includes('Mark') || v.name.includes('David')
+        ));
+        if (roboticVoice) utterance.voice = roboticVoice;
+      } else {
+        // Deep Naval Submarine Radio Commander (Authoritative male radio tone)
+        utterance.rate = 0.98;
+        utterance.pitch = isAlert ? 1.05 : 0.82;
+        const commanderVoice = voices.find(v => v.lang.startsWith('en') && (
+          v.name.includes('David') || v.name.includes('Guy') || v.name.includes('George') || 
+          v.name.includes('Male') || v.name.includes('Daniel')
+        ));
+        if (commanderVoice) utterance.voice = commanderVoice;
+      }
+
+      utterance.volume = Math.max(0, Math.min(1, 0.9 * (this.isMuted ? 0 : this.masterVolume)));
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      // Graceful fallback if speech synthesis is disabled on client device
+    }
+  }
+
+  private playRadioSquelch(): void {
+    try {
+      this.initContext();
+      if (!this.audioCtx) return;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(1400, this.audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, this.audioCtx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.08, this.audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.08);
+      osc.connect(gain);
+      this.connectToDestination(gain);
+      osc.start();
+      osc.stop(this.audioCtx.currentTime + 0.08);
+    } catch {}
   }
 
   toggleMute(): boolean {
@@ -130,7 +310,7 @@ export class SoundService {
       gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.15);
 
       osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
+      this.connectToDestination(gain);
 
       osc.start();
       osc.stop(this.audioCtx.currentTime + 0.15);
@@ -160,7 +340,7 @@ export class SoundService {
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
 
       osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
+      this.connectToDestination(gain);
 
       osc.start(now);
       osc.stop(now + 0.12);
@@ -188,7 +368,7 @@ export class SoundService {
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
 
       osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
+      this.connectToDestination(gain);
 
       osc.start(now);
       osc.stop(now + 0.3);
@@ -216,7 +396,7 @@ export class SoundService {
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
 
       osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
+      this.connectToDestination(gain);
 
       osc.start(now);
       osc.stop(now + 0.2);
@@ -244,7 +424,7 @@ export class SoundService {
       gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
 
       osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
+      this.connectToDestination(gain);
 
       osc.start(now);
       osc.stop(now + 0.18);
@@ -274,7 +454,7 @@ export class SoundService {
         gain.gain.exponentialRampToValueAtTime(0.01, start + 0.25);
 
         osc.connect(gain);
-        gain.connect(this.audioCtx!.destination);
+        this.connectToDestination(gain);
 
         osc.start(start);
         osc.stop(start + 0.25);
@@ -303,7 +483,7 @@ export class SoundService {
       gain.gain.exponentialRampToValueAtTime(0.005, now + 0.35);
 
       osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
+      this.connectToDestination(gain);
 
       osc.start(now);
       osc.stop(now + 0.35);
@@ -333,7 +513,7 @@ export class SoundService {
         gain.gain.exponentialRampToValueAtTime(0.01, start + 0.3);
 
         osc.connect(gain);
-        gain.connect(this.audioCtx!.destination);
+        this.connectToDestination(gain);
 
         osc.start(start);
         osc.stop(start + 0.3);
@@ -366,7 +546,7 @@ export class SoundService {
         gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
 
         osc.connect(gain);
-        gain.connect(this.audioCtx!.destination);
+        this.connectToDestination(gain);
 
         osc.start(start);
         osc.stop(start + dur);
@@ -374,3 +554,4 @@ export class SoundService {
     } catch {}
   }
 }
+

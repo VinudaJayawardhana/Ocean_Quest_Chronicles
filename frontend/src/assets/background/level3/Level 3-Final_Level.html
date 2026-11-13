@@ -22,6 +22,7 @@ html,body{height:100%;margin:0;background:var(--page);overflow:hidden}
 @keyframes pulse{from{opacity:.25}50%{opacity:.8}to{opacity:.4}}
 @keyframes fog{to{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){#back,#front,.b,#pulse,#fog{animation:none}}
+  .paused, .paused * { animation-play-state: paused !important; }
 </style>
 </head>
 <body>
@@ -40,6 +41,16 @@ if(!matchMedia('(prefers-reduced-motion:reduce)').matches){
   const L={back:6,mid:14,front:26};
   addEventListener('pointermove',e=>{const x=e.clientX/innerWidth-.5;for(const k in L)document.getElementById(k).style.transform=`translateX(${-x*L[k]}px)`});
 }
+</script>
+
+<script>
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'PAUSE') {
+    document.body.classList.add('paused');
+  } else if (e.data && e.data.type === 'RESUME') {
+    document.body.classList.remove('paused');
+  }
+});
 </script>
 </body>
 </html>

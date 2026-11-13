@@ -34,6 +34,20 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   puzzleOptions: number[] = [3, 5, 7];
   private puzzleCountdownInterval?: any;
 
+  // 3-2-1 Sonar Chest Decryption Countdown
+  isChestCountdown = false;
+
+  // Collapsible & Shrinkable Top-Right HUD Bar
+  isHudCollapsed = false;
+
+  toggleHudCollapse(): void {
+    this.isHudCollapsed = !this.isHudCollapsed;
+    localStorage.setItem('oq_hud_collapsed', String(this.isHudCollapsed));
+  }
+  chestCountdownTimer = 3;
+  private chestCountdownInterval?: any;
+  private pendingPuzzleData: PuzzleChallenge | null = null;
+
   apiError = '';
   submitting = false;
   private scoreSaved = false;
@@ -52,9 +66,9 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   isHighScoreModal = false;
 
   // Pilot Telemetry & Statistics
-  pilotCallsign = 'DeepDiver_99';
+  pilotCallsign = 'Naval Diver';
   pilotLocation = 'Colombo, Sri Lanka 🇱🇰';
-  bestScore = 1850;
+  bestScore = 0;
   correctAnswers = 0;
   survivalSeconds = 0;
   private timerInterval?: any;
@@ -90,8 +104,16 @@ export class GameViewportComponent implements OnInit, OnDestroy {
     return this.marineService.currentTelemetry;
   }
 
+  get currentAtmosphere(): 'day' | 'sunset' | 'night' {
+    return this.marineService.currentAtmosphere;
+  }
+
   get isNightDive(): boolean {
-    return this.currentTelemetry.isNightDive;
+    return this.currentAtmosphere === 'night';
+  }
+
+  get isSunsetDive(): boolean {
+    return this.currentAtmosphere === 'sunset';
   }
 
   get currentBgUrl(): SafeResourceUrl {
@@ -135,6 +157,10 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    const savedHud = localStorage.getItem('oq_hud_collapsed');
+    if (savedHud === 'true') {
+      this.isHudCollapsed = true;
+    }
     // Check if a starting level was requested via queryParams (e.g. from Level Map)
     this.route.queryParams.subscribe((params) => {
       const lvlParam = parseInt(params['level'], 10);
@@ -180,11 +206,12 @@ export class GameViewportComponent implements OnInit, OnDestroy {
     this.gameEngine.stopGame();
     if (this.timerInterval) clearInterval(this.timerInterval);
     if (this.puzzleCountdownInterval) clearInterval(this.puzzleCountdownInterval);
+    if (this.chestCountdownInterval) clearInterval(this.chestCountdownInterval);
   }
 
   @HostListener('window:keydown', ['$event'])
   onKeyDown(event: KeyboardEvent): void {
-    if (this.currentPuzzle) return;
+    if (this.currentPuzzle || this.isChestCountdown) return;
 
     if (event.key === 'Shift') {
       this.gameEngine.setSprint(true);
@@ -208,7 +235,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
 
   @HostListener('window:keyup', ['$event'])
   onKeyUp(event: KeyboardEvent): void {
-    if (this.currentPuzzle) return;
+    if (this.currentPuzzle || this.isChestCountdown) return;
     if (event.key === 'Shift') {
       this.gameEngine.setSprint(false);
       return;
@@ -217,7 +244,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   }
 
   onStageClick(event: MouseEvent): void {
-    if (!this.oceanStageRef || !this.gameState.isPlaying || this.currentPuzzle) return;
+    if (!this.oceanStageRef || !this.gameState.isPlaying || this.currentPuzzle || this.isChestCountdown) return;
     const rect = this.oceanStageRef.nativeElement.getBoundingClientRect();
     const clickX = ((event.clientX - rect.left) / rect.width) * 100;
     const clickY = ((event.clientY - rect.top) / rect.height) * 100;
@@ -239,6 +266,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   startGame(level: 1 | 2 | 3 = 1): void {
     this.closeAllModals();
     this.closePuzzle();
+    this.updateBackgroundAnimationState(false);
     this.scoreSaved = false;
     this.apiError = '';
     this.survivalSeconds = 0;
@@ -251,6 +279,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
     }, 1000);
 
     this.gameEngine.startGame(level);
+    this.soundService.speakNavalDispatch(`Sector ${level} expedition initiated. Pilot ${this.pilotCallsign}, descend to search depth.`);
 
     this.apiService.startRun().subscribe({
       error: () => (this.apiError = 'Could not start a verified dive. Please log in again.')
@@ -262,7 +291,9 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   }
 
   togglePause(): void {
+    if (this.activeChestId || this.currentPuzzle || this.isChestCountdown) return;
     this.gameEngine.togglePause();
+    this.updateBackgroundAnimationState(this.gameState.isPaused);
   }
 
   toggleMute(): void {
@@ -363,9 +394,16 @@ export class GameViewportComponent implements OnInit, OnDestroy {
    * 2-Phase Sonar Challenge (Memory + Quick Answer)
    * Safely pauses predator attacks and game physics while solving!
    */
+  /**
+   * 2-Phase Sonar Challenge (Memory + Quick Answer)
+   * With 3-2-1 Sonar Decryption Countdown & Safe Predator Immunity
+   */
   openChestPuzzle(chestId: number): void {
-    if (this.puzzleLoading || this.currentPuzzle) return;
+    if (this.puzzleLoading || this.currentPuzzle || this.isChestCountdown) return;
     this.activeChestId = chestId;
+    this.isChestCountdown = true;
+    this.chestCountdownTimer = 3;
+    this.pendingPuzzleData = null;
     this.puzzleLoading = true;
     this.puzzleMessage = '';
     this.apiError = '';
@@ -378,22 +416,56 @@ export class GameViewportComponent implements OnInit, OnDestroy {
     this.gameEngine.setPuzzlePause(true);
     this.bus.emit({ type: 'PuzzleRequested' });
 
+    // Audio cue on countdown start
+    this.soundService.playAlertPing();
+
     this.apiService.newPuzzle().subscribe({
       next: (puzzle) => {
-        this.currentPuzzle = puzzle;
+        this.pendingPuzzleData = puzzle;
         this.puzzleLoading = false;
-        this.puzzleOptions = puzzle.options && puzzle.options.length === 3 ? puzzle.options : [3, 5, 7];
-        this.bus.emit({ type: 'PuzzleLoaded' });
-        this.startMemorizePhase();
+        // If countdown has already elapsed, activate puzzle immediately
+        if (!this.isChestCountdown && this.activeChestId) {
+          this.activateFishPuzzle(puzzle);
+        }
       },
       error: (err) => {
         this.puzzleLoading = false;
+        this.isChestCountdown = false;
         this.activeChestId = null;
+        if (this.chestCountdownInterval) {
+          clearInterval(this.chestCountdownInterval);
+          this.chestCountdownInterval = null;
+        }
         this.gameEngine.setPuzzlePause(false); // Resume if load fails
         this.apiError = err?.error?.error || 'The sonar is offline. Try the chest again in a moment.';
         setTimeout(() => (this.apiError = ''), 4000);
       }
     });
+
+    // 3 -> 2 -> 1 animated countdown
+    if (this.chestCountdownInterval) clearInterval(this.chestCountdownInterval);
+    this.chestCountdownInterval = setInterval(() => {
+      this.chestCountdownTimer--;
+      if (this.chestCountdownTimer > 0) {
+        this.soundService.playAlertPing();
+      } else {
+        clearInterval(this.chestCountdownInterval);
+        this.chestCountdownInterval = null;
+        this.isChestCountdown = false;
+        if (this.pendingPuzzleData) {
+          this.activateFishPuzzle(this.pendingPuzzleData);
+        }
+      }
+    }, 1000);
+  }
+
+  private activateFishPuzzle(puzzle: PuzzleChallenge): void {
+    this.currentPuzzle = puzzle;
+    this.puzzleLoading = false;
+    this.puzzleOptions = puzzle.options && puzzle.options.length === 3 ? puzzle.options : [3, 5, 7];
+    this.bus.emit({ type: 'PuzzleLoaded' });
+    this.soundService.speakNavalDispatch('Sonar locked. Count the fish.');
+    this.startMemorizePhase();
   }
 
   private startMemorizePhase(): void {
@@ -446,6 +518,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
         this.isPuzzleSuccess = r.correct;
         if (r.correct) {
           this.correctAnswers++;
+          this.soundService.speakNavalDispatch(`Cipher decrypted! Plus ${r.points} points.`);
           this.puzzleMessage = `🎉 Correct (${r.solution} fish)! Mystery Box unlocked (+${r.points} pts)!`;
           this.gameEngine.collectChest(r.points);
           const chest = this.gameState.chests.find((item) => item.id === this.activeChestId);
@@ -459,6 +532,16 @@ export class GameViewportComponent implements OnInit, OnDestroy {
             // Stop game engine completely so sharks/enemies cannot attack after level is cleared!
             this.gameEngine.stopGame();
             this.closePuzzle(false);
+
+            // Record cleared level in backend SQLite database (Virtual Identity persistence)
+            this.apiService.saveProgress(currentLevel).subscribe({
+              next: (res) => {
+                localStorage.setItem('ocean_quest_highest_level_cleared', String(res.highestLevel));
+              },
+              error: (err) => {
+                console.warn('Failed to save progression to server:', err);
+              }
+            });
 
             // Record cleared level in localStorage for progressive unlocking
             const prevCleared = parseInt(localStorage.getItem('ocean_quest_highest_level_cleared') || '0', 10);
@@ -477,6 +560,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
             }
           }, 1800);
         } else {
+          this.soundService.speakNavalDispatch('Incorrect count. Diver life point lost.', true);
           this.puzzleMessage = `❌ Incorrect! Real count: ${r.solution}. Lost 1 Life Point.`;
           this.gameEngine.takeLifeDamage('puzzle');
           setTimeout(() => this.closePuzzle(true), 1800);
@@ -503,6 +587,12 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   }
 
   closePuzzle(resumeGame: boolean = true): void {
+    if (this.chestCountdownInterval) {
+      clearInterval(this.chestCountdownInterval);
+      this.chestCountdownInterval = null;
+    }
+    this.isChestCountdown = false;
+    this.pendingPuzzleData = null;
     if (this.puzzleCountdownInterval) clearInterval(this.puzzleCountdownInterval);
     this.currentPuzzle = null;
     this.isPuzzleSuccess = false;
@@ -528,11 +618,16 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   goToLevelMap(): void {
     this.closeAllModals();
     this.closePuzzle();
+    this.updateBackgroundAnimationState(false);
     this.gameEngine.stopGame();
     this.router.navigate(['/levels']);
   }
 
   private handleVictory(): void {
+    this.gameEngine.stopGame();
+    this.soundService.stopBgm();
+    this.updateBackgroundAnimationState(true);
+    if (this.timerInterval) clearInterval(this.timerInterval);
     this.saveFinalScore();
     const isNewRecord = this.gameState.score > this.bestScore;
     if (isNewRecord) {
@@ -545,6 +640,10 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   }
 
   private handleGameOver(): void {
+    this.gameEngine.stopGame();
+    this.soundService.stopBgm();
+    this.updateBackgroundAnimationState(true);
+    if (this.timerInterval) clearInterval(this.timerInterval);
     this.saveFinalScore();
     const isNewRecord = this.gameState.score > this.bestScore && this.gameState.score > 0;
     if (isNewRecord) {
@@ -561,19 +660,47 @@ export class GameViewportComponent implements OnInit, OnDestroy {
     this.scoreSaved = true;
 
     // Increment runs
-    const currentRuns = parseInt(localStorage.getItem('oq_total_runs') || '14', 10) + 1;
+    const currentRuns = parseInt(localStorage.getItem('oq_total_runs') || '0', 10) + 1;
     localStorage.setItem('oq_total_runs', String(currentRuns));
 
+    const currentScore = this.gameState.score;
+    const currentLvl = this.gameState.level;
+    const lvlKey = `ocean_quest_level${currentLvl}_best`;
+    const oldLvlBest = parseInt(localStorage.getItem(lvlKey) || '0', 10);
+    if (currentScore > oldLvlBest) {
+      localStorage.setItem(lvlKey, String(currentScore));
+    }
+
     const exploration = Math.max(0, this.gameState.score - this.gameState.chestsCollected * 250);
-    this.apiService.saveScore({ depthReached: this.gameState.depth, explorationScore: exploration }).subscribe({
+    this.apiService.saveScore({
+      level: currentLvl,
+      depthReached: this.gameState.depth,
+      explorationScore: exploration
+    }).subscribe({
       next: () => console.log('Score synced with global naval fleet.'),
       error: (err) => console.error('Score sync failed:', err)
     });
   }
 
+  updateBackgroundAnimationState(pause: boolean): void {
+    const iframe = document.querySelector('.bg-scene-iframe') as HTMLIFrameElement;
+    if (iframe) {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: pause ? 'PAUSE' : 'RESUME' }, '*');
+      }
+      try {
+        if (iframe.contentDocument && iframe.contentDocument.body) {
+          if (pause) iframe.contentDocument.body.classList.add('paused');
+          else iframe.contentDocument.body.classList.remove('paused');
+        }
+      } catch (e) {}
+    }
+  }
+
   goToMainMenu(): void {
     this.closeAllModals();
     this.closePuzzle();
+    this.updateBackgroundAnimationState(false);
     this.gameEngine.stopGame();
     this.router.navigate(['/']);
   }
@@ -581,7 +708,13 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   goToLeaderboard(): void {
     this.closeAllModals();
     this.closePuzzle();
+    this.updateBackgroundAnimationState(false);
     this.gameEngine.stopGame();
     this.router.navigate(['/leaderboard']);
   }
 }
+
+
+
+
+

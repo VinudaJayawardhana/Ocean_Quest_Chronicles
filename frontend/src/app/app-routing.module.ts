@@ -1,6 +1,6 @@
 /**
  * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
- * Scaffolded with an AI assistant and reviewed/edited by the author.
+ * Enforces authentication so users must be logged in or register when opening the game.
  */
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
@@ -14,13 +14,13 @@ import { ProfileComponent } from './components/profile/profile.component';
 import { AuthGuard } from './guards/auth.guard';
 
 const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'home', component: HomeComponent },
+  { path: '', component: HomeComponent, canActivate: [AuthGuard] },
+  { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'levels', component: LevelMapComponent, canActivate: [AuthGuard] },
   { path: 'game', component: GameViewportComponent, canActivate: [AuthGuard] },
-  { path: 'leaderboard', component: LeaderboardComponent },
+  { path: 'leaderboard', component: LeaderboardComponent, canActivate: [AuthGuard] },
   { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
   { path: '**', redirectTo: '' }
 ];

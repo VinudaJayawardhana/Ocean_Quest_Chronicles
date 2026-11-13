@@ -74,7 +74,34 @@ exports.getMarineTelemetry = async (req, res) => {
     // Graceful fallback: maintain realistic baseline
   }
 
-  // 2. Fetch Ambient Air / Ocean Forecast from Open-Meteo Weather API
+  // 2. Fetch exact Solar Celestial Telemetry from Sunrise-Sunset API (api.sunrise-sunset.org)
+  try {
+    const solarUrl = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&formatted=0`;
+    const solarData = await fetchWithTimeout(solarUrl, 3500);
+    if (solarData?.results) {
+      const now = new Date();
+      const sunrise = new Date(solarData.results.sunrise);
+      const sunset = new Date(solarData.results.sunset);
+      const twilightEnd = new Date(solarData.results.civil_twilight_end);
+      const twilightBegin = new Date(solarData.results.civil_twilight_begin);
+
+      sunriseStr = sunrise.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      sunsetStr = sunset.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      const sunsetWindowStart = new Date(sunset.getTime() - 40 * 60 * 1000);
+      if (now >= twilightBegin && now < sunsetWindowStart) {
+        isNightDive = false;
+      } else if (now >= sunsetWindowStart && now <= twilightEnd) {
+        isNightDive = false;
+      } else {
+        isNightDive = true;
+      }
+    }
+  } catch (err) {
+    // Graceful fallback to standard solar baseline
+  }
+
+  // 3. Fetch Ambient Air / Ocean Forecast from Open-Meteo Weather API
   try {
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,is_day&daily=sunrise,sunset&timezone=auto`;
     const weatherData = await fetchWithTimeout(weatherUrl, 3500);

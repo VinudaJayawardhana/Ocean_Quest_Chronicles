@@ -1,10 +1,13 @@
 /**
  * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
  * Level Map UI exactly matching the user's reference game art layout.
+ * VIRTUAL IDENTITY: Synchronizes highestLevel with the server's SQLite database so unlocked
+ * levels persist across server restarts and new logins.
  */
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ApiService } from '../../services/api.service';
 import { SoundService } from '../../services/sound.service';
 
 export interface LevelNode {
@@ -27,7 +30,7 @@ export class LevelMapComponent implements OnInit {
   highestCleared: number = 0;
   selectedLevel: number = 1;
   isLaunchModalOpen: boolean = false;
-  pilotCallsign: string = 'DeepDiver_99';
+  pilotCallsign: string = 'Naval Diver';
 
   levelsData: { [key: number]: LevelNode } = {
     1: {
@@ -64,6 +67,7 @@ export class LevelMapComponent implements OnInit {
 
   constructor(
     public authService: AuthService,
+    private apiService: ApiService,
     private soundService: SoundService,
     private router: Router
   ) {}
@@ -79,13 +83,34 @@ export class LevelMapComponent implements OnInit {
     // Default select highest unlocked level (capped at 3)
     this.selectedLevel = Math.min(3, Math.max(1, this.highestCleared + 1));
 
-    const profile = localStorage.getItem('ocean_quest_user');
-    if (profile) {
-      try {
-        const u = JSON.parse(profile);
-        if (u.username) this.pilotCallsign = u.username;
-      } catch (e) {}
+    const activeUser = this.authService.getCurrentUser();
+    if (activeUser) {
+      this.pilotCallsign = activeUser.callsign || activeUser.username || 'Naval Diver';
+    } else {
+      const profile = localStorage.getItem('ocean_quest_user');
+      if (profile) {
+        try {
+          const u = JSON.parse(profile);
+          this.pilotCallsign = u.callsign || u.username || 'Naval Diver';
+        } catch (e) {}
+      }
     }
+
+    // Sync Virtual Identity progression from server SQLite database
+    this.apiService.getProfile().subscribe({
+      next: (profile) => {
+        if (profile?.highestLevel !== undefined) {
+          const serverHighest = profile.highestLevel || 0;
+          this.highestCleared = Math.max(this.highestCleared, serverHighest);
+          localStorage.setItem('ocean_quest_highest_level_cleared', String(this.highestCleared));
+          this.selectedLevel = Math.min(3, Math.max(1, this.highestCleared + 1));
+        }
+        if (profile?.profile?.callsign || profile?.callsign) {
+          this.pilotCallsign = profile.profile?.callsign || profile.callsign;
+        }
+      },
+      error: () => {}
+    });
   }
 
   isLevelUnlocked(lvl: number): boolean {
@@ -116,12 +141,11 @@ export class LevelMapComponent implements OnInit {
 
   openSettings(): void {
     this.soundService.playBubble();
-    // Navigate or open settings
-    this.router.navigate(['/']);
+    this.router.navigate(['/home']);
   }
 
   goToMainMenu(): void {
-    this.router.navigate(['/']);
+    this.router.navigate(['/home']);
   }
 
   goToLeaderboard(): void {

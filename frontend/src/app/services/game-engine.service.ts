@@ -100,6 +100,8 @@ export interface ChestEntity {
   id: number;
   x: number;
   y: number;
+  baseY?: number;
+  floatOffset?: number;
   opened: boolean;
   nearPlayer: boolean;
 }
@@ -314,7 +316,7 @@ export class GameEngineService {
 
   stopGame(): void {
     this.stopGameLoop();
-    this.updateState({ isPlaying: false });
+    this.updateState({ isPlaying: false, isPaused: true });
   }
 
   handleKeyDown(key: string): void {
@@ -387,6 +389,7 @@ export class GameEngineService {
 
     if (state.lives <= 0) {
       this.triggerGameOver();
+      return;
     }
   }
 
@@ -423,6 +426,7 @@ export class GameEngineService {
 
     if (newLives <= 0) {
       this.triggerGameOver();
+      return;
     }
   }
 
@@ -473,10 +477,13 @@ export class GameEngineService {
 
     this.updatePhysicsAndLogic(dt);
 
-    this.animFrameId = requestAnimationFrame((t) => this.loop(t));
+    if (this.currentState.isPlaying && !this.currentState.isPaused && !this.currentState.isGameOver) {
+      this.animFrameId = requestAnimationFrame((t) => this.loop(t));
+    }
   }
 
   private updatePhysicsAndLogic(dt: number): void {
+    if (this.currentState.isGameOver || this.currentState.isPaused || !this.currentState.isPlaying) return;
     const state = { ...this.currentState };
     const diver = { ...state.diver };
     this.totalGameTime += dt;
@@ -984,13 +991,19 @@ export class GameEngineService {
       }
     }
 
-    // 4. Chest Proximity Detection
+    // 4. Chest Proximity Detection & Oceanic Buoyancy Float
     const updatedChests = state.chests.map((chest) => {
+      const baseY = chest.baseY ?? chest.y;
+      const floatOffset = (chest.floatOffset ?? 0) + dt * 2.0;
+      const floatingY = !chest.opened ? +(baseY + Math.sin(floatOffset) * 1.5).toFixed(2) : baseY;
       const dx = Math.abs(chest.x - diver.x);
-      const dy = Math.abs(chest.y - diver.y);
+      const dy = Math.abs(floatingY - diver.y);
       const dist = Math.sqrt(dx * dx + dy * dy);
       return {
         ...chest,
+        y: floatingY,
+        baseY,
+        floatOffset,
         nearPlayer: dist < 12
       };
     });
@@ -1004,6 +1017,10 @@ export class GameEngineService {
       if (tb.life < tb.maxLife) {
         updatedTrail.push(tb);
       }
+    }
+
+    if (this.currentState.isGameOver || !this.currentState.isPlaying) {
+      return;
     }
 
     this.ngZone.run(() => {
@@ -1063,19 +1080,30 @@ export class GameEngineService {
     }
   }
 
+  /**
+   * Procedural Entity Generation (University Theme: Low Coupling & Dynamic State Management)
+   * Randomizes predator patrol depths, horizontal spawn bounds, swimming speeds, and detection radii.
+   */
   private createSharksForLevel(level: number): SharkEntity[] {
     if (level === 1) {
-      // Level 1: Easy - 2 Sharks with gentle detection
+      // Level 1: Easy - 2 Sharks procedurally placed at randomized patrol depths and positions
+      const y1 = Math.round(38 + Math.random() * 20); // 38% - 58%
+      const y2 = Math.round(60 + Math.random() * 18); // 60% - 78%
+      const x1 = Math.round(12 + Math.random() * 22); // 12% - 34%
+      const x2 = Math.round(66 + Math.random() * 22); // 66% - 88%
+      const speed1 = +(0.8 + Math.random() * 0.4).toFixed(2);
+      const speed2 = +(0.85 + Math.random() * 0.4).toFixed(2);
+
       return [
         {
           id: 1,
-          x: 18,
-          y: 52,
-          vx: 0.9,
+          x: x1,
+          y: y1,
+          vx: speed1,
           vy: 0,
-          patrolY: 52,
+          patrolY: y1,
           isChasing: false,
-          detectionRadius: 20, // 20% visible alert ring
+          detectionRadius: Math.round(18 + Math.random() * 5),
           facing: 'right',
           state: 'swim',
           frame: 0,
@@ -1084,13 +1112,13 @@ export class GameEngineService {
         },
         {
           id: 2,
-          x: 82,
-          y: 70,
-          vx: -1.0,
+          x: x2,
+          y: y2,
+          vx: -speed2,
           vy: 0,
-          patrolY: 70,
+          patrolY: y2,
           isChasing: false,
-          detectionRadius: 22,
+          detectionRadius: Math.round(20 + Math.random() * 5),
           facing: 'left',
           state: 'swim',
           frame: 1,
@@ -1099,17 +1127,20 @@ export class GameEngineService {
         }
       ];
     } else if (level === 2) {
-      // Level 2: Medium - 1 Shark lurking deep
+      // Level 2: Medium - 1 Shark lurking in procedurally determined deep ocean sector
+      const y1 = Math.round(62 + Math.random() * 16);
+      const x1 = Math.round(15 + Math.random() * 30);
+      const speed1 = +(0.75 + Math.random() * 0.35).toFixed(2);
       return [
         {
           id: 1,
-          x: 20,
-          y: 75,
-          vx: 0.8,
+          x: x1,
+          y: y1,
+          vx: speed1,
           vy: 0,
-          patrolY: 75,
+          patrolY: y1,
           isChasing: false,
-          detectionRadius: 25,
+          detectionRadius: Math.round(22 + Math.random() * 5),
           facing: 'right',
           state: 'swim',
           frame: 0,
@@ -1118,24 +1149,30 @@ export class GameEngineService {
         }
       ];
     } else {
-      // Level 3: Hard (Abyss Trench) - Octopus and Guards are active instead of sharks
       return [];
     }
   }
 
   private createPiratesForLevel(level: number): PirateEntity[] {
     if (level === 2) {
-      // Level 2: Medium - 2 Pirate Raiders
+      // Level 2: Medium - 2 Pirate Raiders with procedurally randomized patrol depths and speeds
+      const y1 = Math.round(38 + Math.random() * 16); // 38% - 54%
+      const y2 = Math.round(56 + Math.random() * 18); // 56% - 74%
+      const x1 = Math.round(15 + Math.random() * 25);
+      const x2 = Math.round(65 + Math.random() * 25);
+      const speed1 = +(0.8 + Math.random() * 0.4).toFixed(2);
+      const speed2 = +(0.85 + Math.random() * 0.4).toFixed(2);
+
       return [
         {
           id: 10,
-          x: 25,
-          y: 45,
-          vx: 0.85,
+          x: x1,
+          y: y1,
+          vx: speed1,
           vy: 0,
-          patrolY: 45,
+          patrolY: y1,
           isChasing: false,
-          detectionRadius: 23,
+          detectionRadius: Math.round(21 + Math.random() * 5),
           facing: 'right',
           state: 'swim',
           frame: 0,
@@ -1145,13 +1182,13 @@ export class GameEngineService {
         },
         {
           id: 11,
-          x: 75,
-          y: 60,
-          vx: -0.9,
+          x: x2,
+          y: y2,
+          vx: -speed2,
           vy: 0,
-          patrolY: 60,
+          patrolY: y2,
           isChasing: false,
-          detectionRadius: 25,
+          detectionRadius: Math.round(23 + Math.random() * 5),
           facing: 'left',
           state: 'swim',
           frame: 2,
@@ -1165,25 +1202,27 @@ export class GameEngineService {
   }
 
   /**
-   * Level 3: Giant Abyssal Octopus protecting the Mystery Box
+   * Level 3: Giant Abyssal Octopus protecting the Mystery Box at its randomized coordinates
    */
   private createOctopusesForLevel(level: number, chests: ChestEntity[]): OctopusEntity[] {
     if (level !== 3) return [];
-    const targetChest = chests && chests[0] ? chests[0] : { x: 50, y: 78 };
+    const targetChest = chests && chests[0] ? chests[0] : { x: 50, y: 70 };
     const chestX = targetChest.x;
     const chestY = targetChest.y;
+    const octoX = Math.max(15, Math.min(85, chestX + Math.round((Math.random() - 0.5) * 8)));
+    const octoY = Math.max(25, chestY - Math.round(12 + Math.random() * 6));
 
     return [
       {
         id: 301,
-        x: chestX,
-        y: Math.max(30, chestY - 14),
-        vx: 0.9,
+        x: octoX,
+        y: octoY,
+        vx: +(0.85 + Math.random() * 0.3).toFixed(2),
         vy: 0,
-        patrolX: chestX,
-        patrolY: Math.max(30, chestY - 14),
+        patrolX: octoX,
+        patrolY: octoY,
         isChasing: false,
-        detectionRadius: 28, // Wide sensing perimeter protecting the mystery box
+        detectionRadius: Math.round(26 + Math.random() * 4),
         facing: 'right',
         state: 'swim',
         frame: 0,
@@ -1194,25 +1233,29 @@ export class GameEngineService {
   }
 
   /**
-   * Level 3: Abyssal Elite Guards patrolling the Mystery Box perimeter
+   * Level 3: Abyssal Elite Guards patrolling around the randomized Mystery Box perimeter
    */
   private createGuardsForLevel(level: number, chests: ChestEntity[]): GuardEntity[] {
     if (level !== 3) return [];
-    const targetChest = chests && chests[0] ? chests[0] : { x: 50, y: 78 };
+    const targetChest = chests && chests[0] ? chests[0] : { x: 50, y: 70 };
     const chestX = targetChest.x;
     const chestY = targetChest.y;
+
+    const g1X = Math.max(10, chestX - Math.round(14 + Math.random() * 8));
+    const g2X = Math.min(90, chestX + Math.round(14 + Math.random() * 8));
+    const gY = Math.max(28, chestY - Math.round(4 + Math.random() * 8));
 
     return [
       {
         id: 401,
-        x: Math.max(12, chestX - 18),
-        y: Math.max(35, chestY - 6),
-        vx: 1.1,
+        x: g1X,
+        y: gY,
+        vx: +(1.0 + Math.random() * 0.3).toFixed(2),
         vy: 0,
-        patrolX: Math.max(12, chestX - 18),
-        patrolY: Math.max(35, chestY - 6),
+        patrolX: g1X,
+        patrolY: gY,
         isChasing: false,
-        detectionRadius: 26,
+        detectionRadius: Math.round(24 + Math.random() * 4),
         facing: 'right',
         state: 'swim',
         frame: 0,
@@ -1221,14 +1264,14 @@ export class GameEngineService {
       },
       {
         id: 402,
-        x: Math.min(88, chestX + 18),
-        y: Math.max(35, chestY - 6),
-        vx: -1.15,
+        x: g2X,
+        y: gY,
+        vx: -(1.05 + Math.random() * 0.3).toFixed(2),
         vy: 0,
-        patrolX: Math.min(88, chestX + 18),
-        patrolY: Math.max(35, chestY - 6),
+        patrolX: g2X,
+        patrolY: gY,
         isChasing: false,
-        detectionRadius: 26,
+        detectionRadius: Math.round(24 + Math.random() * 4),
         facing: 'left',
         state: 'swim',
         frame: 2,
@@ -1240,8 +1283,22 @@ export class GameEngineService {
 
   private createInitialBubbles(): OxygenBubbleEntity[] {
     return [
-      { id: 100, x: 25, y: 70, vy: 0.6, size: 34, popped: false },
-      { id: 101, x: 65, y: 80, vy: 0.5, size: 30, popped: false }
+      {
+        id: 100,
+        x: Math.round(15 + Math.random() * 30),
+        y: Math.round(55 + Math.random() * 25),
+        vy: +(0.5 + Math.random() * 0.25).toFixed(2),
+        size: Math.round(28 + Math.random() * 8),
+        popped: false
+      },
+      {
+        id: 101,
+        x: Math.round(55 + Math.random() * 35),
+        y: Math.round(60 + Math.random() * 25),
+        vy: +(0.45 + Math.random() * 0.2).toFixed(2),
+        size: Math.round(26 + Math.random() * 8),
+        popped: false
+      }
     ];
   }
 
@@ -1250,7 +1307,7 @@ export class GameEngineService {
       return [
         {
           id: 501,
-          x: 10, // Coral Sanctuary on west side
+          x: 10,
           y: 78,
           radius: 11,
           name: 'Coral Sanctuary'
@@ -1260,14 +1317,13 @@ export class GameEngineService {
       return [
         {
           id: 502,
-          x: 90, // Kelp Sanctuary on east side
+          x: 90,
           y: 76,
           radius: 11,
           name: 'Kelp Sanctuary'
         }
       ];
     } else {
-      // Level 3: Hard - Central hydrothermal safe vent
       return [
         {
           id: 503,
@@ -1281,19 +1337,21 @@ export class GameEngineService {
   }
 
   /**
-   * Spawns mystery treasure box at a randomized seabed location
+   * Spawns mystery treasure box containing the Fish API question at a procedurally randomized location
+   * (University Themes: Procedural Generation, Interoperability & Dynamic State Management)
    */
   public createChestsForLevel(level: number): ChestEntity[] {
-    // Generate random X coordinate between 20% and 80% (away from screen edges)
-    // and random seabed Y between 74% and 84%
-    const randomX = Math.round(20 + Math.random() * 60);
-    const randomY = Math.round(76 + Math.random() * 7);
+    // Randomize horizontal X between 18% and 82%, depth Y between 42% and 80%
+    const randomX = Math.round(18 + Math.random() * 64);
+    const randomY = Math.round(42 + Math.random() * 38);
 
     return [
       {
         id: this.nextEntityId++,
         x: randomX,
         y: randomY,
+        baseY: randomY,
+        floatOffset: +(Math.random() * Math.PI * 2).toFixed(2),
         opened: false,
         nearPlayer: false
       }
@@ -1301,7 +1359,7 @@ export class GameEngineService {
   }
 
   /**
-   * Re-randomize mystery chest position after successful decryption
+   * Re-randomize mystery chest position after successful decryption or level reset
    */
   public respawnChestAtRandomLocation(): void {
     const s = this.currentState;
@@ -1315,8 +1373,8 @@ export class GameEngineService {
 
   private triggerGameOver(): void {
     this.stopGameLoop();
-    this.bus.emit({ type: 'GameOver', score: this.currentState.score });
     this.updateState({
+      isPaused: true,
       isGameOver: true,
       isPlaying: false,
       diver: {
@@ -1324,6 +1382,7 @@ export class GameEngineService {
         state: 'defeated'
       }
     });
+    this.bus.emit({ type: 'GameOver', score: this.currentState.score });
   }
 
   private updateState(partial: Partial<GameState>): void {
@@ -1338,3 +1397,6 @@ export class GameEngineService {
     this.keys = {};
   }
 }
+
+
+

@@ -33,15 +33,23 @@ exports.recordAnswer = (session, correct) => {
 };
 
 /** Close the run and return the verified result, or null if there is no open run. */
-exports.finish = (session, { depthReached, explorationScore }) => {
+exports.finish = (session, { depthReached, explorationScore, level }) => {
   const run = session.run;
   if (!run || run.finished) return null;
   const seconds = (Date.now() - run.startedAt) / 1000;
   const exploration = clamp(Number(explorationScore) || 0, 0, Math.floor(seconds * MAX_EXPLORATION_PER_SECOND) + 50);
+  const parsedDepth = clamp(Math.floor(Number(depthReached) || 0), 0, MAX_DEPTH);
+  let parsedLevel = clamp(Math.floor(Number(level) || 0), 1, 3);
+  if (!level) {
+    if (parsedDepth >= 280) parsedLevel = 3;
+    else if (parsedDepth >= 140) parsedLevel = 2;
+    else parsedLevel = 1;
+  }
   run.finished = true;
   return {
     score: run.puzzleScore + Math.floor(exploration),
-    depthReached: clamp(Math.floor(Number(depthReached) || 0), 0, MAX_DEPTH),
-    chestsCollected: run.chests
+    depthReached: parsedDepth,
+    chestsCollected: run.chests,
+    level: parsedLevel
   };
 };

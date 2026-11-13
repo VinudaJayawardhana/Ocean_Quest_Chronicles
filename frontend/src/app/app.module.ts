@@ -17,6 +17,7 @@ import { LevelMapComponent } from './components/level-map/level-map.component';
 import { LeaderboardComponent } from './components/leaderboard/leaderboard.component';
 import { ProfileComponent } from './components/profile/profile.component';
 import { SettingsModalComponent } from './components/settings/settings-modal.component';
+import { WelcomeModalComponent } from './components/home/welcome-modal.component';
 import { CredentialsInterceptor } from './interceptors/credentials.interceptor';
 
 @NgModule({
@@ -29,7 +30,8 @@ import { CredentialsInterceptor } from './interceptors/credentials.interceptor';
     LevelMapComponent,
     LeaderboardComponent,
     ProfileComponent,
-    SettingsModalComponent
+    SettingsModalComponent,
+    WelcomeModalComponent
   ],
   imports: [
     BrowserModule,

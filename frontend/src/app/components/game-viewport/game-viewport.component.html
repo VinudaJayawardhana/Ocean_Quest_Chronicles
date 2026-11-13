@@ -1,11 +1,17 @@
-<div class="viewport-wrapper" [class.screen-shake]="gameState.screenShake" [class.night-dive]="isNightDive">
+<div class="viewport-wrapper" [class.screen-shake]="gameState.screenShake" [class.night-dive]="isNightDive" [class.sunset-dive]="isSunsetDive">
   
   <!-- =========================================================================
        Screen 5 HUD: Danger Meter, 10-Digit Score, 3 Hearts, & Action Controls
        ========================================================================= -->
-  <header class="hud-top-bar" *ngIf="gameState.isPlaying || gameState.isPaused">
+  <header class="hud-top-bar" *ngIf="(gameState.isPlaying || gameState.isPaused) && !isGameOverModal && !isVictory && !isHighScoreModal && !isLevelComplete">
     <!-- Top-Left: Danger Meter, Score & Hearts -->
     <div class="hud-left-group">
+      <!-- Pilot Identity Badge (DiceBear Avatar Virtual Identity) -->
+      <div class="hud-pilot-pill" [title]="pilotCallsign">
+        <img [src]="authService.getDiverAvatar(pilotCallsign)" alt="Pilot" class="hud-pilot-avatar-img" (error)="authService.handleAvatarError($event)" />
+        <span class="hud-pilot-callsign">{{ pilotCallsign }}</span>
+      </div>
+
       <div class="danger-meter-container">
         <div class="danger-meter-meta">
           <span class="danger-label">Danger meter</span>
@@ -39,67 +45,97 @@
       </div>
     </div>
 
-    <!-- Top-Right: Controls & Gauges -->
-    <div class="hud-right-group">
-      <div class="hud-gauges-cluster">
-        <!-- Live Marine Weather & Telemetry Badge (Open-Meteo & Climate API) -->
-        <div 
-          class="marine-telemetry-badge" 
-          [title]="currentTelemetry.climateWarning || (currentTelemetry.city + ' - ' + currentTelemetry.waterTemperature + '°C')"
-        >
-          <span class="telemetry-temp">🌡️ {{ currentTelemetry.waterTemperature }}°C</span>
-          <span class="telemetry-wave">🌊 {{ currentTelemetry.seaCondition }}</span>
-          <span class="telemetry-mode" [class.night]="isNightDive">
-            {{ isNightDive ? '🌙 Night' : '☀️ Day' }}
-          </span>
-        </div>
+    <!-- Top-Right: Controls & Gauges (Collapsible & Shrinkable) -->
+    <div class="hud-right-group" [class.is-collapsed]="isHudCollapsed">
+      <!-- Collapse / Shrink Toggle Button -->
+      <button 
+        type="button" 
+        class="hud-collapse-btn" 
+        (click)="toggleHudCollapse()" 
+        [title]="isHudCollapsed ? 'Expand Telemetry & Controls' : 'Shrink & Collapse Controls'"
+        aria-label="Toggle Controls"
+      >
+        <span class="collapse-icon">{{ isHudCollapsed ? '◀' : '▶' }}</span>
+        <span class="collapse-text">{{ isHudCollapsed ? 'EXPAND' : 'SHRINK' }}</span>
+      </button>
 
-        <div class="depth-badge">
-          <span class="depth-icon">⚓</span>
-          <span class="depth-val">{{ gameState.depth }}m</span>
-        </div>
+      <!-- Shrunk Mini Badge (Visible only when Collapsed) -->
+      <div 
+        class="hud-shrunk-pill" 
+        *ngIf="isHudCollapsed" 
+        (click)="toggleHudCollapse()" 
+        title="Click to Expand Full Telemetry & Controls"
+      >
+        <span>🌡️ {{ currentTelemetry.waterTemperature }}°C</span>
+        <span class="shrunk-sep">•</span>
+        <span>⚓ {{ gameState.depth }}m</span>
+        <span class="shrunk-gear">⚙️</span>
       </div>
 
-      <div class="hud-buttons-cluster">
-        <button 
-          type="button" 
-          class="hud-icon-btn" 
-          (click)="openSettings()" 
-          title="Game Settings"
-        >
-          ⚙
-        </button>
+      <!-- Full Expanded Cluster (Gauges + Buttons) -->
+      <div class="hud-collapsible-wrapper" *ngIf="!isHudCollapsed">
+        <div class="hud-gauges-cluster">
+          <!-- Live Marine Weather & Telemetry Badge (Open-Meteo & Climate API) -->
+          <div 
+            class="marine-telemetry-badge" 
+            [title]="currentTelemetry.climateWarning || (currentTelemetry.city + ' - ' + currentTelemetry.waterTemperature + '°C')"
+          >
+            <span class="telemetry-temp">🌡️ {{ currentTelemetry.waterTemperature }}°C</span>
+            <span class="telemetry-wave">🌊 {{ currentTelemetry.seaCondition }}</span>
+            <span class="telemetry-mode" [class.night]="isNightDive" [class.sunset]="isSunsetDive">
+              {{ isNightDive ? '🌙 Night' : (isSunsetDive ? '🌅 Sunset' : '☀️ Day') }}
+            </span>
+          </div>
 
-        <button 
-          type="button" 
-          class="hud-icon-btn" 
-          (click)="toggleMute()" 
-          [title]="soundService.isMuted ? 'Unmute Audio' : 'Mute Audio'"
-        >
-          {{ soundService.isMuted ? '🔇' : '🔊' }}
-        </button>
+          <div class="depth-badge">
+            <span class="depth-icon">⚓</span>
+            <span class="depth-val">{{ gameState.depth }}m</span>
+          </div>
+        </div>
 
-        <button 
-          type="button" 
-          class="hud-icon-btn" 
-          *ngIf="gameState.isPlaying && !gameState.isGameOver"
-          (click)="togglePause()" 
-          title="Pause Dive (P)"
-        >
-          {{ gameState.isPaused ? '▶' : '⏸' }}
-        </button>
+        <div class="hud-buttons-cluster">
+          <button 
+            type="button" 
+            class="hud-icon-btn" 
+            (click)="openSettings()" 
+            title="Game Settings"
+          >
+            ⚙️
+          </button>
 
-        <button 
-          type="button" 
-          class="hud-icon-btn exit-btn" 
-          (click)="goToMainMenu()" 
-          title="Exit to Main Menu"
-        >
-          ✕
-        </button>
+          <button 
+            type="button" 
+            class="hud-icon-btn" 
+            (click)="toggleMute()" 
+            [title]="soundService.isMuted ? 'Unmute Audio' : 'Mute Audio'"
+          >
+            {{ soundService.isMuted ? '🔇' : '🔊' }}
+          </button>
+
+          <button 
+            type="button" 
+            class="hud-icon-btn" 
+            *ngIf="gameState.isPlaying && !gameState.isGameOver"
+            (click)="togglePause()" 
+            title="Pause Dive (P)"
+          >
+            {{ gameState.isPaused ? '▶' : '⏸' }}
+          </button>
+
+          <button 
+            type="button" 
+            class="hud-icon-btn exit-btn" 
+            (click)="goToMainMenu()" 
+            title="Exit to Main Menu"
+          >
+            ✕
+          </button>
+        </div>
       </div>
     </div>
   </header>
+
+  
 
   <!-- =========================================================================
        Main Ocean Stage (Underwater Visual World)
@@ -108,7 +144,7 @@
     <!-- Animated SVG Underwater Background Scene -->
     <iframe 
       [src]="currentBgUrl" 
-      class="bg-scene-iframe" 
+      class="bg-scene-iframe" [class.game-stopped]="isGameOverModal || isHighScoreModal || isVictory || !gameState.isPlaying" 
       tabindex="-1" 
       aria-hidden="true"
     ></iframe>
@@ -304,6 +340,8 @@
       [style.top.%]="chest.y"
       (click)="$event.stopPropagation(); openChestPuzzle(chest.id)"
     >
+      <!-- Sonar Beacon Ping Wave to locate the procedurally placed mystery box -->
+      <div class="chest-sonar-beacon" *ngIf="!chest.opened"></div>
       <div class="chest-icon">
         {{ chest.opened ? '🔓' : '📦' }}
       </div>
@@ -373,13 +411,41 @@
     </div>
 
     <!-- API Loading Indicator -->
-    <div class="api-loading-banner" *ngIf="puzzleLoading">
+    <div class="api-loading-banner" *ngIf="puzzleLoading && !isChestCountdown">
       <div class="sonar-spinner"></div>
       <p>Receiving sonar transmission from Fish Game API...</p>
     </div>
 
     <div class="api-loading-banner error-banner" *ngIf="apiError" role="alert">
       <p>{{ apiError }}</p>
+    </div>
+
+    <!-- =======================================================================
+         Screen 6-A: Sonar Chest 3-2-1 Countdown Overlay
+         ======================================================================= -->
+    <div class="modal-overlay chest-countdown-overlay" *ngIf="isChestCountdown">
+      <div class="ocean-glass-card sonar-countdown-card animate-scale-up">
+        <div class="sonar-radar-ring ring-1"></div>
+        <div class="sonar-radar-ring ring-2"></div>
+        <div class="sonar-radar-ring ring-3"></div>
+
+        <div class="sonar-badge-tag">
+          <span class="sonar-pulse-dot"></span>
+          <span>SONAR CIPHER DETECTED</span>
+        </div>
+
+        <h2 class="sonar-countdown-heading">DECODING FISH TRANSMISSION</h2>
+        <p class="sonar-countdown-sub">Locking optical sensors on sea life coordinates...</p>
+
+        <div class="sonar-digit-circle">
+          <div class="sonar-sweep-beam"></div>
+          <span class="sonar-countdown-number">{{ chestCountdownTimer }}</span>
+        </div>
+
+        <div class="sonar-prep-instruction">
+          <span>👁️ GET READY TO MEMORIZE THE FISH COUNT!</span>
+        </div>
+      </div>
     </div>
 
     <!-- =======================================================================
@@ -767,7 +833,7 @@
     </div>
 
     <!-- Pause Overlay -->
-    <div class="modal-overlay" *ngIf="gameState.isPaused && gameState.isPlaying">
+    <div class="modal-overlay" *ngIf="gameState.isPaused && gameState.isPlaying && !activeChestId && !currentPuzzle && !isChestCountdown">
       <div class="ocean-glass-card modal-center-card">
         <h2 class="card-title">⏸ EXPEDITION PAUSED</h2>
         <p class="card-subtitle">Depth: {{ gameState.depth }}m | Score: {{ gameState.score }}</p>
@@ -794,3 +860,5 @@
 
   </main>
 </div>
+
+

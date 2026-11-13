@@ -27,9 +27,15 @@ function initializeTables() {
         country TEXT DEFAULT 'Unknown',
         city TEXT DEFAULT 'Unknown',
         ip TEXT DEFAULT '',
+        highestLevel INTEGER DEFAULT 0,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+
+    // Safe migration: Add highestLevel to existing users table if missing
+    db.run("ALTER TABLE users ADD COLUMN highestLevel INTEGER DEFAULT 0", () => {
+      // Ignored if column already exists
+    });
 
     // Scores table
     db.run(`
@@ -41,10 +47,20 @@ function initializeTables() {
         depthReached INTEGER DEFAULT 0,
         chestsCollected INTEGER DEFAULT 0,
         country TEXT DEFAULT 'Unknown',
+        level INTEGER DEFAULT 1,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (userId) REFERENCES users (id)
       )
     `);
+
+    // Safe migration: Add level to existing scores table if missing
+    db.run("ALTER TABLE scores ADD COLUMN level INTEGER DEFAULT 1", () => {
+      // Ignored if column already exists
+    });
+
+    // Safe migration: Align legacy scores with depth thresholds
+    db.run("UPDATE scores SET level = 3 WHERE depthReached >= 280 AND (level IS NULL OR level = 1)");
+    db.run("UPDATE scores SET level = 2 WHERE depthReached >= 140 AND depthReached < 280 AND (level IS NULL OR level = 1)");
   });
 }
 
