@@ -343,7 +343,10 @@
       <!-- Sonar Beacon Ping Wave to locate the procedurally placed mystery box -->
       <div class="chest-sonar-beacon" *ngIf="!chest.opened"></div>
       <div class="chest-icon">
-        {{ chest.opened ? '🔓' : '📦' }}
+        <ng-container *ngIf="!chest.opened">
+          <img src="assets/sprites/chest/mystery_box.png" alt="Mystery Box" class="mystery-box-img" />
+        </ng-container>
+        <span *ngIf="chest.opened" class="chest-opened-icon">🔓</span>
       </div>
       <div class="chest-prompt" *ngIf="chest.nearPlayer && !chest.opened">
         <span>Press [E] or Click</span>
@@ -436,6 +439,10 @@
 
         <h2 class="sonar-countdown-heading">DECODING FISH TRANSMISSION</h2>
         <p class="sonar-countdown-sub">Locking optical sensors on sea life coordinates...</p>
+
+        <div class="sonar-chest-preview-wrap">
+          <img src="assets/sprites/chest/mystery_box.png" alt="Mystery Cargo" class="sonar-chest-preview-img" />
+        </div>
 
         <div class="sonar-digit-circle">
           <div class="sonar-sweep-beam"></div>
