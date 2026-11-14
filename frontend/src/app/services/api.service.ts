@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * File: services/api.service.ts
  * INTEROPERABILITY: JSON over HTTP(S) to our Express API. The Fish Game API is reached through
  * /puzzle/* so the answer is verified on the server and never travels to the browser early.
@@ -18,8 +18,8 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
-  getLeaderboard(limit = 20, level?: number | null): Observable<LeaderboardEntry[]> {
-    let url = `${this.base}/leaderboard?limit=${limit}`;
+  getLeaderboard(limit = 20, level?: number | null, mode: 'best' | 'cumulative' = 'best'): Observable<LeaderboardEntry[]> {
+    let url = `${this.base}/leaderboard?limit=${limit}&mode=${mode}`;
     if (level !== undefined && level !== null) {
       url += `&level=${level}`;
     }
@@ -37,6 +37,11 @@ export class ApiService {
 
   updateProfile(profileData: any): Observable<any> {
     return this.http.put<any>(`${this.base}/profile`, profileData);
+  }
+
+  /** Record daily challenge completion and claim bonus XP */
+  recordDailyChallenge(date: string): Observable<{ message: string; completed: boolean }> {
+    return this.http.post<{ message: string; completed: boolean }>(`${this.base}/profile/daily-challenge`, { date });
   }
 
   /** Save level clearance progression to user's persistent virtual identity on the server */

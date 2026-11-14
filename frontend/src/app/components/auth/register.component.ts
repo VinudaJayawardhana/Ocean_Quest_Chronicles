@@ -9,6 +9,19 @@ import { LocationService } from '../../services/location.service';
     <div class="ocean-screen-layout">
       <!-- Background image layer -->
       <div class="auth-bg-layer" style="background-image: url('assets/background/register_background/signup_image.png');" aria-hidden="true"></div>
+      <!-- Floating Bubbles -->
+      <div class="bubbles-layer" aria-hidden="true">
+        <div class="bubble b1"></div>
+        <div class="bubble b2"></div>
+        <div class="bubble b3"></div>
+        <div class="bubble b4"></div>
+        <div class="bubble b5"></div>
+        <div class="bubble b6"></div>
+        <div class="bubble b7"></div>
+        <div class="bubble b8"></div>
+        <div class="bubble b9"></div>
+        <div class="bubble b10"></div>
+      </div>
       <!-- Floating Fullscreen Toggle -->
       <button 
         type="button" 
@@ -95,7 +108,7 @@ import { LocationService } from '../../services/location.service';
           <!-- Buttons -->
           <div class="btn-stack" style="margin-top: 1.4rem;">
             <button type="submit" class="btn-pill btn-coral" [disabled]="loading">
-              {{ loading ? 'Enlisting...' : 'Sign Up & Dive' }}
+              {{ loading ? 'Enlisting...' : 'Sign Up' }}
             </button>
             <a routerLink="/login" class="btn-pill btn-white">
               Already Enlisted? Login
@@ -291,7 +304,8 @@ export class RegisterComponent implements OnInit {
     this.authService.register(payload).subscribe({
       next: () => {
         this.loading = false;
-        this.router.navigate(['/home']);
+        this.authService.logout();
+        this.router.navigate(['/login'], { queryParams: { enlisted: 'true' } });
       },
       error: (err) => {
         this.loading = false;

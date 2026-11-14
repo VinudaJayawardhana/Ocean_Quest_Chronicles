@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * File: backend/controllers/profileController.js
  * Description: Pilot profile (dossier). Identity comes from the server session.
  * VIRTUAL IDENTITY: Progress (highestLevel) and personal dive records (bestScore, maxDepth, totalRuns)
@@ -21,6 +21,7 @@ const shape = (u, stats = {}) => ({
   level3Best: stats.level3Best || 0,
   maxDepth: stats.maxDepth || 0,
   totalRuns: stats.totalRuns || 0,
+  dailyChallengeCompleted: !!stats.dailyChallengeCompleted,
   profile: {
     callsign: u.callsign || u.username,
     avatarUrl: u.avatarUrl,
@@ -44,11 +45,16 @@ exports.getProfile = async (req, res) => {
 
     // Query personal dive telemetry directly from verified scores table
     const stats = await db.queryGet(
-      'SELECT MAX(score) AS bestScore, MAX(CASE WHEN (level = 1 OR (level IS NULL AND depthReached < 140)) THEN score ELSE 0 END) AS level1Best, MAX(CASE WHEN (level = 2 OR (level IS NULL AND depthReached >= 140 AND depthReached < 280)) THEN score ELSE 0 END) AS level2Best, MAX(CASE WHEN (level = 3 OR (level IS NULL AND depthReached >= 280)) THEN score ELSE 0 END) AS level3Best, MAX(depthReached) AS maxDepth, COUNT(*) AS totalRuns FROM scores WHERE userId = ?',
+      'SELECT MAX(CASE WHEN (level >= 1 OR level IS NULL) THEN score ELSE 0 END) AS bestScore, MAX(CASE WHEN (level = 1 OR (level IS NULL AND depthReached < 140)) THEN score ELSE 0 END) AS level1Best, MAX(CASE WHEN (level = 2 OR (level IS NULL AND depthReached >= 140 AND depthReached < 280)) THEN score ELSE 0 END) AS level2Best, MAX(CASE WHEN (level = 3 OR (level IS NULL AND depthReached >= 280)) THEN score ELSE 0 END) AS level3Best, MAX(depthReached) AS maxDepth, COUNT(*) AS totalRuns FROM scores WHERE userId = ?',
       [userId]
     );
 
-    res.status(200).json(shape(user, stats || {}));
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const dailyDone = await db.queryGet(
+      'SELECT id FROM daily_challenges WHERE userId = ? AND challengeDate = ?',
+      [userId, todayStr]
+    );
+    res.status(200).json(shape(user, { ...(stats || {}), dailyChallengeCompleted: !!dailyDone }));
   } catch (err) {
     console.error('Profile error:', err);
     res.status(500).json({ error: 'Error retrieving profile.' });
@@ -114,5 +120,42 @@ exports.saveProgress = async (req, res) => {
   } catch (err) {
     console.error('SaveProgress error:', err);
     res.status(500).json({ error: 'Failed to record progression.' });
+  }
+};
+
+// POST /api/profile/daily-challenge  { date: string }
+exports.recordDailyChallenge = async (req, res) => {
+  try {
+    const userId = req.session?.userId;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized.' });
+    const todayStr = req.body?.date || new Date().toISOString().slice(0, 10);
+
+    const existing = await db.queryGet(
+      'SELECT id FROM daily_challenges WHERE userId = ? AND challengeDate = ?',
+      [userId, todayStr]
+    );
+    if (existing) {
+      return res.status(200).json({ message: 'Daily challenge already recorded today.', completed: true });
+    }
+
+    await db.queryRun(
+      'INSERT INTO daily_challenges (userId, challengeDate) VALUES (?, ?)',
+      [userId, todayStr]
+    );
+
+    // Award +500 XP to scores for cumulative career XP
+    const user = await db.queryGet('SELECT username, country FROM users WHERE id = ?', [userId]);
+    if (user) {
+      await db.queryRun(
+        `INSERT INTO scores (userId, username, score, depthReached, chestsCollected, country, level)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [userId, user.username, 500, 0, 1, user.country || 'Sri Lanka', 0]
+      );
+    }
+
+    res.status(201).json({ message: 'Daily challenge recorded! +500 XP granted.', completed: true });
+  } catch (err) {
+    console.error('Daily challenge record error:', err);
+    res.status(500).json({ error: 'Failed to record daily challenge.' });
   }
 };

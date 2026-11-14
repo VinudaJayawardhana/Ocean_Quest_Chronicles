@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * File: services/auth.service.ts
  * VIRTUAL IDENTITY: The server session (/api/me) is the single source of truth.
  * If the backend is off or restarted, the client automatically invalidates the identity,
@@ -28,10 +28,23 @@ export class AuthService {
   }
 
   login(credentials: { email: string; password: string }): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.base}/login`, credentials).pipe(tap((r) => this.setUser(r.user)));
+    return this.http.post<AuthResponse>(`${this.base}/login`, credentials).pipe(tap((r) => { this.clearUserStorage(); this.setUser(r.user); }));
+  }
+
+    clearUserStorage(): void {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.removeItem('ocean_quest_best_score');
+    localStorage.removeItem('ocean_quest_level1_best');
+    localStorage.removeItem('ocean_quest_level2_best');
+    localStorage.removeItem('ocean_quest_level3_best');
+    localStorage.removeItem('ocean_quest_max_depth');
+    localStorage.removeItem('ocean_quest_highest_level_cleared');
+    localStorage.removeItem('oq_total_runs');
+    localStorage.removeItem('oq_achievements');
   }
 
   logout(): void {
+    this.clearUserStorage();
     this.setUser(null);
     this.http.post(`${this.base}/logout`, {}).subscribe({ error: () => undefined });
   }
@@ -62,7 +75,8 @@ export class AuthService {
       bg = 'd97706';   // Level 2 (Pirate Cove): Corsair Amber Gold
     }
 
-    return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name + '_lvl' + lvl)}&backgroundColor=${bg}`;
+    // Consistent facial identity: seed is strictly the pilot's callsign so facial features remain identical across all levels/leaderboard rows
+    return `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}&backgroundColor=${bg}`;
   }
 
   /**

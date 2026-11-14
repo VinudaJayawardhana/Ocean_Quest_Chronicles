@@ -1,4 +1,8 @@
-/** Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md) */
+/**
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
+ * Pilot and User Profile Models
+ */
+
 export interface PilotProfile {
   callsign: string;
   avatarUrl: string;
@@ -22,6 +26,7 @@ export interface User {
   level3Best?: number;
   maxDepth?: number;
   totalRuns?: number;
+  dailyChallengeCompleted?: boolean;
   profile?: PilotProfile; // only present in /api/profile responses
 }
 
@@ -41,4 +46,5 @@ export interface LeaderboardEntry {
   country: string;
   level?: number;
   createdAt?: string;
+  totalDives?: number;
 }

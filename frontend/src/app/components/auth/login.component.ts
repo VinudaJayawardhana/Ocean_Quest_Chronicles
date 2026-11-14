@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -8,6 +8,19 @@ import { AuthService } from '../../services/auth.service';
     <div class="ocean-screen-layout">
       <!-- Background image layer -->
       <div class="auth-bg-layer" style="background-image: url('assets/background/register_background/login_image.png');" aria-hidden="true"></div>
+      <!-- Floating Bubbles -->
+      <div class="bubbles-layer" aria-hidden="true">
+        <div class="bubble b1"></div>
+        <div class="bubble b2"></div>
+        <div class="bubble b3"></div>
+        <div class="bubble b4"></div>
+        <div class="bubble b5"></div>
+        <div class="bubble b6"></div>
+        <div class="bubble b7"></div>
+        <div class="bubble b8"></div>
+        <div class="bubble b9"></div>
+        <div class="bubble b10"></div>
+      </div>
       <!-- Floating Fullscreen Toggle -->
       <button 
         type="button" 
@@ -56,6 +69,7 @@ import { AuthService } from '../../services/auth.service';
             />
           </div>
 
+          <p *ngIf="successMessage" class="success-badge">{{ successMessage }}</p>
           <p *ngIf="errorMessage" class="error-badge">{{ errorMessage }}</p>
 
           <!-- Buttons -->
@@ -89,6 +103,17 @@ import { AuthService } from '../../services/auth.service';
     @keyframes authBgDrift {
       0%   { transform: scale(1)    translate(0, 0); }
       100% { transform: scale(1.05) translate(-1%, 0.5%); }
+    }
+
+    .success-badge {
+      background: rgba(16, 185, 129, 0.25);
+      border: 1px solid #10b981;
+      color: #a7f3d0;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
     }
 
     .error-badge {
@@ -157,11 +182,17 @@ export class LoginComponent implements OnInit {
   identifier = '';
   password = '';
   errorMessage = '';
+  successMessage = '';
   loading = false;
 
-  constructor(private authService: AuthService, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router, private route: ActivatedRoute) {}
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      if (params['enlisted'] === 'true') {
+        this.successMessage = 'Pilot enlisted successfully! Please login with your credentials.';
+      }
+    });
     this.isFullscreen = !!document.fullscreenElement;
     document.addEventListener('fullscreenchange', () => {
       this.isFullscreen = !!document.fullscreenElement;

@@ -15,6 +15,18 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 function initializeTables() {
   db.serialize(() => {
+    // Daily challenges table (Theme 4: Virtual Identity & user-scoped daily milestones)
+    db.run(`
+      CREATE TABLE IF NOT EXISTS daily_challenges (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER NOT NULL,
+        challengeDate TEXT NOT NULL,
+        completedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(userId, challengeDate),
+        FOREIGN KEY (userId) REFERENCES users (id)
+      )
+    `);
+
     // Users table
     db.run(`
       CREATE TABLE IF NOT EXISTS users (

@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * File: backend/controllers/scoreController.js
  * Description: Leaderboard read + verified score save.
  * VIRTUAL IDENTITY: userId/username come from the session, never from the request body.
@@ -8,23 +8,63 @@
 const db = require('../config/db');
 const runService = require('../services/runService');
 
-// GET /api/leaderboard  or  GET /api/scores (supports optional ?level=1|2|3)
+// GET /api/leaderboard  or  GET /api/scores (supports optional ?level=1|2|3 and ?mode=best|cumulative)
+// High Cohesion / Virtual Identity: 1 distinct row per pilot call-sign with personal best or cumulative career XP
 exports.getLeaderboard = async (req, res) => {
   try {
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 20, 1), 50);
     const levelQuery = req.query.level ? parseInt(req.query.level, 10) : null;
+    const mode = req.query.mode === 'cumulative' ? 'cumulative' : 'best';
 
-    let sql = `SELECT id, userId, username, score, depthReached, chestsCollected, country, level, createdAt FROM scores`;
+    let sql;
     const params = [];
 
-    if (levelQuery && levelQuery >= 1 && levelQuery <= 3) {
-      // Filter by level with backwards-compatible depth threshold fallback
-      sql += ` WHERE (level = ? OR (level IS NULL AND (CASE WHEN ? = 3 THEN depthReached >= 280 WHEN ? = 2 THEN (depthReached >= 140 AND depthReached < 280) ELSE depthReached < 140 END)))`;
-      params.push(levelQuery, levelQuery, levelQuery);
+    if (mode === 'cumulative') {
+      sql = `
+        SELECT 
+          MIN(id) AS id, 
+          userId, 
+          username, 
+          SUM(score) AS score, 
+          MAX(depthReached) AS depthReached, 
+          SUM(chestsCollected) AS chestsCollected, 
+          country, 
+          MAX(level) AS level, 
+          MAX(createdAt) AS createdAt,
+          COUNT(*) AS totalDives
+        FROM scores
+        WHERE (level >= 1 OR level IS NULL)
+      `;
+      if (levelQuery && levelQuery >= 1 && levelQuery <= 3) {
+        sql += ` AND (level = ? OR (level IS NULL AND (CASE WHEN ? = 3 THEN depthReached >= 280 WHEN ? = 2 THEN (depthReached >= 140 AND depthReached < 280) ELSE depthReached < 140 END)))`;
+        params.push(levelQuery, levelQuery, levelQuery);
+      }
+      sql += ` GROUP BY COALESCE(userId, username) ORDER BY score DESC, depthReached DESC LIMIT ?`;
+      params.push(limit);
+    } else {
+      // Personal Best: 1 distinct entry per pilot with their maximum single-run score
+      sql = `
+        SELECT 
+          id, 
+          userId, 
+          username, 
+          MAX(score) AS score, 
+          depthReached, 
+          chestsCollected, 
+          country, 
+          level, 
+          createdAt,
+          COUNT(*) AS totalDives
+        FROM scores
+        WHERE 1=1
+      `;
+      if (levelQuery && levelQuery >= 1 && levelQuery <= 3) {
+        sql += ` AND (level = ? OR (level IS NULL AND (CASE WHEN ? = 3 THEN depthReached >= 280 WHEN ? = 2 THEN (depthReached >= 140 AND depthReached < 280) ELSE depthReached < 140 END)))`;
+        params.push(levelQuery, levelQuery, levelQuery);
+      }
+      sql += ` GROUP BY COALESCE(userId, username) ORDER BY score DESC, depthReached DESC LIMIT ?`;
+      params.push(limit);
     }
-
-    sql += ` ORDER BY score DESC, depthReached DESC LIMIT ?`;
-    params.push(limit);
 
     const rows = await db.queryAll(sql, params);
     res.status(200).json(rows);
