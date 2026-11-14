@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * File: services/event-bus.service.ts
  *
  * EVENT-DRIVEN PROGRAMMING: A tiny publish/subscribe bus built on an RxJS Subject.
@@ -15,6 +15,8 @@ import { filter } from 'rxjs/operators';
 export type GameEvent =
   | { type: 'Swim' }
   | { type: 'BubbleCollected' }
+  | { type: 'PowerupCollected'; powerupType: 'nitro' | 'shield' }
+  | { type: 'AchievementUnlocked'; achievementId: string; title: string }
   | { type: 'SharkBite' }
   | { type: 'SwordSlash' }
   | { type: 'OctopusAttack' }

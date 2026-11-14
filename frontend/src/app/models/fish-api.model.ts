@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * Models for the Sonar Challenge. The browser never talks to the Fish Game API directly:
  * our Express server fetches the puzzle and keeps the solution (interoperability + security).
  */

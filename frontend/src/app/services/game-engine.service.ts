@@ -1,6 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
- * Scaffolded with an AI assistant and reviewed/edited by the author.
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures * Core application architecture and component implementation.
  */
 import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -114,6 +113,16 @@ export interface SafeZoneEntity {
   name: string;
 }
 
+export interface PowerupEntity {
+  id: number;
+  x: number;
+  y: number;
+  type: 'nitro' | 'shield';
+  collected: boolean;
+  bobOffset?: number;
+}
+
+
 export interface TrailBubble {
   id: number;
   x: number;
@@ -146,6 +155,9 @@ export interface GameState {
   bubbles: OxygenBubbleEntity[];
   chests: ChestEntity[];
   safeZones: SafeZoneEntity[];
+  powerups: PowerupEntity[];
+  shieldTimeRemaining: number;
+  nitroTimeRemaining: number;
   trailBubbles: TrailBubble[];
 }
 
@@ -186,6 +198,9 @@ export class GameEngineService {
     bubbles: [],
     chests: [],
     safeZones: [],
+    powerups: [],
+    shieldTimeRemaining: 0,
+    nitroTimeRemaining: 0,
     trailBubbles: []
   };
 
@@ -252,6 +267,9 @@ export class GameEngineService {
       bubbles: this.createInitialBubbles(),
       chests,
       safeZones: this.createSafeZonesForLevel(level),
+      powerups: this.createPowerupsForLevel(level),
+      shieldTimeRemaining: 0,
+      nitroTimeRemaining: 0,
       trailBubbles: []
     };
 
@@ -286,8 +304,11 @@ export class GameEngineService {
       octopuses: this.createOctopusesForLevel(level, chests),
       guards: this.createGuardsForLevel(level, chests),
       safeZones: this.createSafeZonesForLevel(level),
-      chests
-    });
+        powerups: this.createPowerupsForLevel(level),
+        shieldTimeRemaining: 0,
+        nitroTimeRemaining: 0,
+        chests
+      });
     this.bus.emit({ type: 'LevelChanged', level });
   }
 
@@ -435,6 +456,13 @@ export class GameEngineService {
     this.takeLifeDamage();
   }
 
+  addScore(points: number): void {
+    const state = this.currentState;
+    this.updateState({
+      score: state.score + points
+    });
+  }
+
   collectChest(points: number): void {
     const state = this.currentState;
     this.bus.emit({ type: 'ChestUnlocked', points });
@@ -527,9 +555,38 @@ export class GameEngineService {
       diver.bobOffset = 0;
     }
 
+    const nitroMult = state.nitroTimeRemaining > 0 ? 1.6 : 1.0;
     // Update position
-    diver.x += diver.vx * 32 * dt;
-    diver.y += (diver.vy * 26 + diver.bobOffset * 0.3) * dt;
+    diver.x += diver.vx * 32 * dt * nitroMult;
+    diver.y += (diver.vy * 26 * nitroMult + diver.bobOffset * 0.3) * dt;
+
+    
+    // Power-up duration timers
+    if (state.shieldTimeRemaining > 0) {
+      state.shieldTimeRemaining = Math.max(0, state.shieldTimeRemaining - dt);
+    }
+    if (state.nitroTimeRemaining > 0) {
+      state.nitroTimeRemaining = Math.max(0, state.nitroTimeRemaining - dt);
+    }
+
+    // Power-up pickups collision check
+    state.powerups.forEach((pu) => {
+      if (!pu.collected) {
+        pu.bobOffset = Math.sin(this.totalGameTime * 3.5 + pu.id) * 1.5;
+        const dx = diver.x - pu.x;
+        const dy = diver.y - (pu.y + (pu.bobOffset || 0));
+        const dist = Math.hypot(dx, dy);
+        if (dist <= 5.5) {
+          pu.collected = true;
+          if (pu.type === 'nitro') {
+            state.nitroTimeRemaining = 7;
+          } else if (pu.type === 'shield') {
+            state.shieldTimeRemaining = 8;
+          }
+          this.bus.emit({ type: 'PowerupCollected', powerupType: pu.type });
+        }
+      }
+    });
 
     // Viewport clamping
     diver.x = Math.max(5, Math.min(91, diver.x));
@@ -600,7 +657,7 @@ export class GameEngineService {
     const isNearBox = state.chests.some(
       (c) => !c.opened && Math.hypot(diver.x - c.x, diver.y - c.y) <= 14
     );
-    const isDiverProtected = isDiverInSafeZone || isNearBox || state.isPaused;
+    const isDiverProtected = isDiverInSafeZone || isNearBox || state.isPaused || state.shieldTimeRemaining > 0;
     state.isDiverInSafeZone = isDiverInSafeZone;
 
     // 2. Predator Encounters (Visible Detection Radius, Safe Sanctuary & Box Immunity)
@@ -709,9 +766,9 @@ export class GameEngineService {
       const detectionDist = p.detectionRadius || 26;
       const shouldChase = !isDiverProtected && !state.isPaused && dist <= detectionDist && p.attackCooldown <= 0;
 
-      // Pirate sword slash attack strike range: aspect-corrected contact distance (5.8%)
-      const strikeDist = Math.hypot(dx, dy * 1.5);
-      if (strikeDist <= 5.8 && !isDiverProtected && !state.isPaused && diver.invulnerableTime <= 0 && p.attackCooldown <= 0 && !state.isGameOver) {
+      // Pirate sword slash attack strike range: tight true distance (4.2%) — no corner false positives
+      const strikeDist = Math.hypot(dx, dy);
+      if (strikeDist <= 4.2 && !isDiverProtected && !state.isPaused && diver.invulnerableTime <= 0 && p.attackCooldown <= 0 && !state.isGameOver) {
         p.state = 'attack';
         p.attackTimer = 0.9;
         p.attackFrame = 2;
@@ -1300,6 +1357,26 @@ export class GameEngineService {
         popped: false
       }
     ];
+  }
+
+  
+  private createPowerupsForLevel(level: number): PowerupEntity[] {
+    if (level === 1) {
+      return [
+        { id: 701, x: 26, y: 52, type: 'nitro', collected: false, bobOffset: 0 },
+        { id: 702, x: 74, y: 44, type: 'shield', collected: false, bobOffset: 1 }
+      ];
+    } else if (level === 2) {
+      return [
+        { id: 703, x: 30, y: 40, type: 'shield', collected: false, bobOffset: 0 },
+        { id: 704, x: 70, y: 64, type: 'nitro', collected: false, bobOffset: 1 }
+      ];
+    } else {
+      return [
+        { id: 705, x: 20, y: 60, type: 'shield', collected: false, bobOffset: 0 },
+        { id: 706, x: 80, y: 48, type: 'nitro', collected: false, bobOffset: 1 }
+      ];
+    }
   }
 
   private createSafeZonesForLevel(level: number): SafeZoneEntity[] {

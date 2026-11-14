@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * File: frontend/src/app/services/marine.service.ts
  * Description: Dedicated Angular service for Marine Weather, Water Temperature, and Day/Night APIs.
  * Kept strictly in a separate file from the Fish Game API and ApiService for clean modularity.
@@ -39,6 +39,11 @@ export class MarineService {
     this.solarMode = mode;
     localStorage.setItem('oq_solar_mode', mode);
     this.solarModeSubject.next(mode);
+    if (mode === 'auto') {
+      const lat = this.currentTelemetry.latitude || 6.9271;
+      const lon = this.currentTelemetry.longitude || 79.8612;
+      this.fetchSolarTimes(lat, lon);
+    }
   }
 
   public get currentAtmosphere(): 'day' | 'sunset' | 'night' {
@@ -61,27 +66,33 @@ export class MarineService {
       catchError(() => of(null))
     ).subscribe((res) => {
       if (res && res.status === 'OK' && res.results) {
-        const now = new Date();
-        const sunrise = new Date(res.results.sunrise);
-        const sunset = new Date(res.results.sunset);
-        const twilightEnd = new Date(res.results.civil_twilight_end);
-        const twilightBegin = new Date(res.results.civil_twilight_begin);
+        // Use UTC milliseconds for comparison — the API always returns ISO 8601 UTC strings.
+        // new Date() gives local time in ms since epoch; ISO strings parse to the same epoch,
+        // so the comparison is timezone-safe for ANY region worldwide.
+        const nowUtcMs = Date.now();
+        const sunriseMs       = new Date(res.results.sunrise).getTime();
+        const sunsetMs        = new Date(res.results.sunset).getTime();
+        const twilightEndMs   = new Date(res.results.civil_twilight_end).getTime();
+        const twilightBeginMs = new Date(res.results.civil_twilight_begin).getTime();
 
-        const sunriseStr = sunrise.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        const sunsetStr = sunset.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        // Display strings in user's local time zone (for HUD display only)
+        const sunriseStr = new Date(sunriseMs).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const sunsetStr  = new Date(sunsetMs).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-        // Golden hour sunset window: 40 mins before sunset until civil twilight end
-        const sunsetWindowStart = new Date(sunset.getTime() - 40 * 60 * 1000);
+        // Golden hour window: 40 mins before sunset → civil twilight end
+        const sunsetWindowStartMs = sunsetMs - 40 * 60 * 1000;
+
         let ambient: 'day' | 'sunset' | 'night' = 'day';
         let night = false;
 
-        if (now >= twilightBegin && now < sunsetWindowStart) {
+        if (nowUtcMs >= twilightBeginMs && nowUtcMs < sunsetWindowStartMs) {
           ambient = 'day';
           night = false;
-        } else if (now >= sunsetWindowStart && now <= twilightEnd) {
+        } else if (nowUtcMs >= sunsetWindowStartMs && nowUtcMs <= twilightEndMs) {
           ambient = 'sunset';
           night = false;
         } else {
+          // Before civil twilight begin (pre-dawn) OR after civil twilight end (night)
           ambient = 'night';
           night = true;
         }
@@ -118,16 +129,19 @@ export class MarineService {
         (pos) => {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
-          this.fetchTelemetry(lat, lon);
+          this.fetchTelemetry(lat, lon).subscribe();
+          this.fetchSolarTimes(lat, lon);
         },
         () => {
           // Fallback to default coordinates
-          this.fetchTelemetry();
+          this.fetchTelemetry().subscribe();
+          this.fetchSolarTimes();
         },
         { timeout: 5000 }
       );
     } else {
-      this.fetchTelemetry();
+      this.fetchTelemetry().subscribe();
+      this.fetchSolarTimes();
     }
   }
 

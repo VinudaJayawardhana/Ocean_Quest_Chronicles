@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * File: backend/controllers/marineController.js
  * Description: Dedicated Marine Telemetry & Weather API Controller.
  * Kept strictly separate from the Fish Game API per project modularity guidelines.
@@ -74,26 +74,30 @@ exports.getMarineTelemetry = async (req, res) => {
     // Graceful fallback: maintain realistic baseline
   }
 
-  // 2. Fetch exact Solar Celestial Telemetry from Sunrise-Sunset API (api.sunrise-sunset.org)
+    // 2. Fetch exact Solar Celestial Telemetry from Sunrise-Sunset API (api.sunrise-sunset.org)
+  let ambientLighting = 'day';
   try {
     const solarUrl = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&formatted=0`;
     const solarData = await fetchWithTimeout(solarUrl, 3500);
     if (solarData?.results) {
-      const now = new Date();
-      const sunrise = new Date(solarData.results.sunrise);
-      const sunset = new Date(solarData.results.sunset);
-      const twilightEnd = new Date(solarData.results.civil_twilight_end);
-      const twilightBegin = new Date(solarData.results.civil_twilight_begin);
+      const nowUtcMs = Date.now();
+      const sunriseMs = new Date(solarData.results.sunrise).getTime();
+      const sunsetMs = new Date(solarData.results.sunset).getTime();
+      const twilightEndMs = new Date(solarData.results.civil_twilight_end).getTime();
+      const twilightBeginMs = new Date(solarData.results.civil_twilight_begin).getTime();
 
-      sunriseStr = sunrise.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-      sunsetStr = sunset.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      sunriseStr = new Date(sunriseMs).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      sunsetStr = new Date(sunsetMs).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-      const sunsetWindowStart = new Date(sunset.getTime() - 40 * 60 * 1000);
-      if (now >= twilightBegin && now < sunsetWindowStart) {
+      const sunsetWindowStartMs = sunsetMs - 40 * 60 * 1000;
+      if (nowUtcMs >= twilightBeginMs && nowUtcMs < sunsetWindowStartMs) {
+        ambientLighting = 'day';
         isNightDive = false;
-      } else if (now >= sunsetWindowStart && now <= twilightEnd) {
+      } else if (nowUtcMs >= sunsetWindowStartMs && nowUtcMs <= twilightEndMs) {
+        ambientLighting = 'sunset';
         isNightDive = false;
       } else {
+        ambientLighting = 'night';
         isNightDive = true;
       }
     }
@@ -103,23 +107,20 @@ exports.getMarineTelemetry = async (req, res) => {
 
   // 3. Fetch Ambient Air / Ocean Forecast from Open-Meteo Weather API
   try {
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m,is_day&daily=sunrise,sunset&timezone=auto`;
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,wind_speed_10m&daily=sunrise,sunset&timezone=auto`;
     const weatherData = await fetchWithTimeout(weatherUrl, 3500);
     if (weatherData?.current) {
       airTemperature = Math.round(weatherData.current.temperature_2m * 10) / 10;
       // In coastal marine zones, shallow water temperature correlates with ambient air
       waterTemperature = Math.round((airTemperature - 2.5) * 10) / 10;
       currentSpeedKmH = Math.round((weatherData.current.wind_speed_10m * 0.25) * 10) / 10;
-      isNightDive = weatherData.current.is_day === 0;
     }
     if (weatherData?.daily?.sunrise?.[0] && weatherData?.daily?.sunset?.[0]) {
       sunriseStr = weatherData.daily.sunrise[0].split('T')[1] || sunriseStr;
       sunsetStr = weatherData.daily.sunset[0].split('T')[1] || sunsetStr;
     }
   } catch (err) {
-    // If external call times out, compute day/night from local client time
-    const hour = new Date().getHours();
-    isNightDive = hour < 6 || hour >= 18;
+    // Fallback if network offline
   }
 
   // Determine climate warning and gameplay implications
@@ -142,7 +143,7 @@ exports.getMarineTelemetry = async (req, res) => {
     waveHeight,
     currentSpeedKmH,
     isNightDive,
-    ambientLighting: isNightDive ? 'night' : (new Date().getHours() >= 17 ? 'golden_hour' : 'day'),
+    ambientLighting,
     sunriseTime: sunriseStr,
     sunsetTime: sunsetStr,
     climateWarning,

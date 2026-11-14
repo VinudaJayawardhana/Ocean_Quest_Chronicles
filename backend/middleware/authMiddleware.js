@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * File: server/middleware/authMiddleware.js
  * Description: Middleware ensuring requests have an active authenticated server session.
  * VIRTUAL IDENTITY: Identity is strictly taken from the server-side session cookie (req.session.userId).

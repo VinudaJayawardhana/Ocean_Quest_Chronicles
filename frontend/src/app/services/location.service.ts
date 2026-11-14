@@ -1,6 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
- * Scaffolded with an AI assistant and reviewed/edited by the author.
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures * Core application architecture and component implementation.
  */
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';

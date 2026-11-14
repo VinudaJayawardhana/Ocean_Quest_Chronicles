@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md)
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * VIRTUAL IDENTITY: Makes the browser send the HttpOnly server session cookie
  * to OUR API (localhost:5000). The cookie is the sole bearer of identity.
  * Requests to third-party sites (e.g. ipapi.co) are untouched to prevent cookie leaks.

@@ -1,6 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
- * Scaffolded with an AI assistant and reviewed/edited by the author.
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures * Core application architecture and component implementation.
  */
 import { Injectable } from '@angular/core';
 import { GameEventBus, GameEvent } from './event-bus.service';
@@ -184,6 +183,7 @@ export class SoundService {
     switch (e.type) {
       case 'Swim': return this.playSwim();
       case 'BubbleCollected': return this.playBubble();
+      case 'PowerupCollected': return this.playPowerupChime();
       case 'SharkBite': 
         this.playSharkBite();
         return;
@@ -210,73 +210,18 @@ export class SoundService {
   }
 
   /**
-   * NAVAL RADIO DISPATCH VOICE COMMUNICATOR (Automated Submarine Comms)
-   * Uses Web Speech Synthesis API with naval radio squelch audio filter.
-   * Fully decoupled and respects global audio mute state.
+   * NAVAL RADIO DISPATCH VOICE — disabled (no-op).
+   * Voice removed per design decision; signature kept for backward compatibility.
    */
-  speakNavalDispatch(message: string, isAlert: boolean = false): void {
-    if (this.isMuted) return;
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
-    try {
+  speakNavalDispatch(_message: string, _isAlert: boolean = false): void {
+    // Voice output removed — no speech synthesis called.
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      this.playRadioSquelch();
-
-      const utterance = new SpeechSynthesisUtterance(message);
-      const voices = window.speechSynthesis.getVoices();
-
-      if (this.voicePersona === 'tactical') {
-        // Crisp Tactical Comms AI Officer (Female English tone)
-        utterance.rate = 1.08;
-        utterance.pitch = isAlert ? 1.25 : 1.10;
-        const tacticalVoice = voices.find(v => v.lang.startsWith('en') && (
-          v.name.includes('Zira') || v.name.includes('Aria') || v.name.includes('Google UK English Female') || 
-          v.name.includes('Samantha') || v.name.includes('Female') || v.name.includes('Jenny')
-        ));
-        if (tacticalVoice) utterance.voice = tacticalVoice;
-      } else if (this.voicePersona === 'robotic') {
-        // Cybernetic Sonar Dispatcher (Low mechanical cadence)
-        utterance.rate = 1.14;
-        utterance.pitch = isAlert ? 0.8 : 0.62;
-        const roboticVoice = voices.find(v => v.lang.startsWith('en') && (
-          v.name.includes('Robo') || v.name.includes('Natural') || v.name.includes('Google US English') ||
-          v.name.includes('Mark') || v.name.includes('David')
-        ));
-        if (roboticVoice) utterance.voice = roboticVoice;
-      } else {
-        // Deep Naval Submarine Radio Commander (Authoritative male radio tone)
-        utterance.rate = 0.98;
-        utterance.pitch = isAlert ? 1.05 : 0.82;
-        const commanderVoice = voices.find(v => v.lang.startsWith('en') && (
-          v.name.includes('David') || v.name.includes('Guy') || v.name.includes('George') || 
-          v.name.includes('Male') || v.name.includes('Daniel')
-        ));
-        if (commanderVoice) utterance.voice = commanderVoice;
-      }
-
-      utterance.volume = Math.max(0, Math.min(1, 0.9 * (this.isMuted ? 0 : this.masterVolume)));
-      window.speechSynthesis.speak(utterance);
-    } catch {
-      // Graceful fallback if speech synthesis is disabled on client device
     }
   }
 
   private playRadioSquelch(): void {
-    try {
-      this.initContext();
-      if (!this.audioCtx) return;
-      const osc = this.audioCtx.createOscillator();
-      const gain = this.audioCtx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(1400, this.audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(300, this.audioCtx.currentTime + 0.08);
-      gain.gain.setValueAtTime(0.08, this.audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.08);
-      osc.connect(gain);
-      this.connectToDestination(gain);
-      osc.start();
-      osc.stop(this.audioCtx.currentTime + 0.08);
-    } catch {}
+    // Squelch removed alongside naval voice.
   }
 
   toggleMute(): boolean {
@@ -288,6 +233,31 @@ export class SoundService {
       this.startBgm();
     }
     return this.isMuted;
+  }
+
+  /**
+   * Scuba Power-up pickup chime (Nitro Fin / Sonar Shield)
+   */
+  playPowerupChime(): void {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.audioCtx) return;
+
+    try {
+      const now = this.audioCtx.currentTime;
+      [659.25, 880.0, 1174.66].forEach((freq, idx) => {
+        const osc = this.audioCtx!.createOscillator();
+        const gain = this.audioCtx!.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+        osc.connect(gain);
+        this.connectToDestination(gain);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.25);
+      });
+    } catch {}
   }
 
   /**

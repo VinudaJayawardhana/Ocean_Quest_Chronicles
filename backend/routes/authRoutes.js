@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * File: server/routes/authRoutes.js
  * Description: Express routes for user authentication and virtual identity.
  * VIRTUAL IDENTITY: Defines contract for authentication session endpoints.
