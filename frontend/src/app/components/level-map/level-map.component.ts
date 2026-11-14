@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * Level Map UI exactly matching the user's reference game art layout.
  * VIRTUAL IDENTITY: Synchronizes highestLevel with the server's SQLite database so unlocked
  * levels persist across server restarts and new logins.

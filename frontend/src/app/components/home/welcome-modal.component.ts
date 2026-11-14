@@ -1,5 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures
  * WelcomeModalComponent — First-time pilot briefing modal & welcome screen.
  * Extracted from HomeComponent for separation of concerns (Low Coupling principle).
  * Emits (dive) to launch game, (dismiss) to close.
@@ -52,12 +52,6 @@ import {
           <span class="wm-hbubble" style="left:40%; width:9px;  height:9px;  animation-duration:6s;   animation-delay:0.4s;"></span>
           <span class="wm-hbubble" style="left:62%; width:6px;  height:6px;  animation-duration:8s;   animation-delay:2s;"></span>
           <span class="wm-hbubble" style="left:80%; width:8px;  height:8px;  animation-duration:5s;   animation-delay:0.8s;"></span>
-
-          <!-- Swimming fish lane -->
-          <span class="wm-fish wm-fish-1">🐠</span>
-          <span class="wm-fish wm-fish-2">🐟</span>
-          <span class="wm-fish wm-fish-3">🐡</span>
-          <span class="wm-fish wm-fish-4">🦈</span>
 
           <!-- Wave SVG at bottom of header -->
           <svg class="wm-header-wave" viewBox="0 0 500 28" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
@@ -256,25 +250,7 @@ import {
       100% { transform: translateY(-110px);  opacity: 0; }
     }
 
-    /* Fish swim across header */
-    .wm-fish {
-      position: absolute;
-      pointer-events: none;
-      animation: wmFishSwim linear infinite;
-    }
-    .wm-fish-1 { top: 12px; font-size: 1.3rem; opacity: 0.85; animation-duration: 9s;  animation-delay: 0s; }
-    .wm-fish-2 { top: 42px; font-size: 0.95rem; opacity: 0.7; animation-duration: 13s; animation-delay: 2.5s; }
-    .wm-fish-3 { top: 22px; font-size: 1.0rem;  opacity: 0.65; animation-duration: 11s; animation-delay: 5.5s; }
-    .wm-fish-4 { top: 55px; font-size: 0.85rem; opacity: 0.45; animation-duration: 16s; animation-delay: 1.2s; }
 
-    @keyframes wmFishSwim {
-      0%   { transform: translateX(-60px) translateY(0px);  opacity: 0; }
-      5%   { opacity: 1; }
-      30%  { transform: translateX(30%)   translateY(-5px); }
-      60%  { transform: translateX(60%)   translateY(4px);  }
-      90%  { opacity: 0.7; }
-      100% { transform: translateX(calc(500px + 60px)) translateY(-2px); opacity: 0; }
-    }
 
     /* Wave cut at bottom of header */
     .wm-header-wave {

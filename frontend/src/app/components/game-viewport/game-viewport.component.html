@@ -91,6 +91,16 @@
             <span class="depth-icon">⚓</span>
             <span class="depth-val">{{ gameState.depth }}m</span>
           </div>
+
+          <!-- Active Scuba Powerup Timers -->
+          <div class="depth-badge powerup-hud-badge pu-hud-nitro" *ngIf="gameState.nitroTimeRemaining > 0" title="Nitro Speed Boost Active">
+            <span class="depth-icon">⚡</span>
+            <span class="depth-val">{{ gameState.nitroTimeRemaining | number:'1.0-0' }}s</span>
+          </div>
+          <div class="depth-badge powerup-hud-badge pu-hud-shield" *ngIf="gameState.shieldTimeRemaining > 0" title="Sonar Shield Invulnerability Active">
+            <span class="depth-icon">🛡️</span>
+            <span class="depth-val">{{ gameState.shieldTimeRemaining | number:'1.0-0' }}s</span>
+          </div>
         </div>
 
         <div class="hud-buttons-cluster">
@@ -165,6 +175,9 @@
     <div 
       *ngIf="gameState.isPlaying || gameState.isGameOver"
       class="diver-entity"
+      [class.suit-coral]="diverSuit === 'coral'"
+      [class.suit-aqua]="diverSuit === 'aqua'"
+      [class.suit-gold]="diverSuit === 'gold'"
       [style.left.%]="gameState.diver.x"
       [style.top.%]="gameState.diver.y"
       [style.transform]="getDiverTransform()"
@@ -173,6 +186,12 @@
       [class.state-scared]="gameState.diver.state === 'scared'"
       [class.state-celebrate]="gameState.diver.state === 'celebrate'"
     >
+      
+      <!-- Protective Sonar Shield Bubble Aura -->
+      <div class="diver-shield-bubble" *ngIf="gameState.shieldTimeRemaining > 0">
+        <div class="shield-pulse-ring"></div>
+      </div>
+
       <!-- Night Dive Scuba Headlamp Flashlight Beam -->
       <div 
         *ngIf="isNightDive" 
@@ -194,6 +213,24 @@
         <span *ngIf="gameState.diver.state === 'defeated'">💀 Sinking...</span>
       </div>
     </div>
+
+    
+    <!-- Scuba Powerup Pickups (Nitro Fins & Sonar Shield - Theme 2) -->
+    <ng-container *ngFor="let pu of gameState.powerups">
+      <div 
+        *ngIf="!pu.collected && gameState.isPlaying"
+        class="powerup-pickup"
+        [class.pu-nitro]="pu.type === 'nitro'"
+        [class.pu-shield]="pu.type === 'shield'"
+        [style.left.%]="pu.x"
+        [style.top.%]="pu.y + (pu.bobOffset || 0)"
+        [title]="pu.type === 'nitro' ? '⚡ Nitro Fins (Speed Boost)' : '🛡️ Sonar Shield (Invulnerability)'"
+      >
+        <div class="powerup-halo"></div>
+        <span class="powerup-icon">{{ pu.type === 'nitro' ? '⚡' : '🛡️' }}</span>
+        <span class="powerup-label">{{ pu.type === 'nitro' ? 'NITRO' : 'SHIELD' }}</span>
+      </div>
+    </ng-container>
 
     <!-- Safe Haven Sanctuaries (Predators Cannot Enter / Turn Away) -->
     <div 
@@ -435,7 +472,7 @@
         </div>
 
         <h2 class="sonar-countdown-heading">DECODING FISH TRANSMISSION</h2>
-        <p class="sonar-countdown-sub">Locking optical sensors on sea life coordinates...</p>
+        <p class="sonar-countdown-sub">Locking optical sensors on fish coordinates...</p>
 
         <div class="sonar-digit-circle">
           <div class="sonar-sweep-beam"></div>
@@ -463,7 +500,7 @@
           <!-- Phase 1: Memorization Phase (5s Countdown) -->
           <ng-container *ngIf="puzzlePhase === 'memorize'">
             <div class="inner-header-banner">
-              👁️ PHASE 1: MEMORIZE THE SEA LIFE!
+              👁️ PHASE 1: COUNT NUMBER OF FISH!
             </div>
 
             <!-- 5-Second Timer Bar -->
@@ -484,7 +521,7 @@
             </div>
 
             <p class="phase-instruction">
-              Count all sea life on the sonar display! The image will disappear in <strong>{{ memorizeTimer }}s</strong>!
+              Count the number of fish on the sonar display! The image will disappear in <strong>{{ memorizeTimer }}s</strong>!
             </p>
           </ng-container>
 
@@ -508,7 +545,7 @@
               <div class="radar-classified-text">
                 <span class="lock-glyph">🔒</span>
                 <h4>SONAR IMAGE CONCEALED</h4>
-                <p>Telemetry recorded. Select the matching sea life count before time expires!</p>
+                <p>Telemetry recorded. Select the matching fish count before time expires!</p>
               </div>
             </div>
 

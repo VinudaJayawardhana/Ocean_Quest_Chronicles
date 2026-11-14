@@ -124,24 +124,7 @@
       100% { transform: translateY(-105vh) translateX(var(--drift,8px)) scale(0.7); opacity: 0; }
     }
 
-    /* ═══════════════════════════════════════════
-       FISH SILHOUETTES
-    ═══════════════════════════════════════════ */
-    .sp-fish {
-      position: absolute;
-      pointer-events: none;
-      animation: fishSwim linear infinite;
-      /* natural slight wave path via vertical drift */
-    }
-    @keyframes fishSwim {
-      0%   { transform: translateX(-80px) translateY(0px); opacity: 0; }
-      5%   { opacity: 1; }
-      25%  { transform: translateX(25vw)  translateY(-8px); }
-      50%  { transform: translateX(50vw)  translateY(5px); }
-      75%  { transform: translateX(75vw)  translateY(-6px); }
-      95%  { opacity: 0.6; }
-      100% { transform: translateX(calc(100vw + 80px)) translateY(2px); opacity: 0; }
-    }
+
 
     /* ═══════════════════════════════════════════
        MAIN CONTENT
@@ -287,12 +270,6 @@
     <div class="sp-bubble" aria-hidden="true" style="left:76%; width:5px;  height:5px;  --drift:6px;   animation-duration:6.8s;  animation-delay:0.2s;"></div>
     <div class="sp-bubble" aria-hidden="true" style="left:85%; width:11px; height:11px; --drift:-9px;  animation-duration:10.2s; animation-delay:2.5s;"></div>
     <div class="sp-bubble" aria-hidden="true" style="left:92%; width:4px;  height:4px;  --drift:4px;   animation-duration:5.6s;  animation-delay:1.4s;"></div>
-
-    <!-- Fish – natural wave swimming paths -->
-    <div class="sp-fish" aria-hidden="true" style="top:18%; font-size:1.5rem; animation-duration:16s;  animation-delay:0s;">🐠</div>
-    <div class="sp-fish" aria-hidden="true" style="top:62%; font-size:1.0rem; animation-duration:21s;  animation-delay:5s;">🐟</div>
-    <div class="sp-fish" aria-hidden="true" style="top:38%; font-size:1.9rem; animation-duration:26s;  animation-delay:9s; opacity:0.4;">🐡</div>
-    <div class="sp-fish" aria-hidden="true" style="top:75%; font-size:0.85rem;animation-duration:19s;  animation-delay:3s; opacity:0.3;">🐠</div>
 
     <!-- Main centered content -->
     <div class="sp-content">

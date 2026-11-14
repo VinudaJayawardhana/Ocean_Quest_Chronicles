@@ -2,11 +2,28 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
+import { AchievementService, Achievement } from '../../services/achievement.service';
 
 @Component({
   selector: 'app-profile',
   template: `
     <div class="ocean-screen-layout">
+      <!-- Background image layer -->
+      <div class="profile-bg-layer" style="background-image: url('assets/background/profile_background/profile_background.png');" aria-hidden="true"></div>
+      <!-- Floating Ambient Bubbles -->
+      <div class="bubbles-layer" aria-hidden="true">
+        <div class="bubble b1"></div>
+        <div class="bubble b2"></div>
+        <div class="bubble b3"></div>
+        <div class="bubble b4"></div>
+        <div class="bubble b5"></div>
+        <div class="bubble b6"></div>
+        <div class="bubble b7"></div>
+        <div class="bubble b8"></div>
+        <div class="bubble b9"></div>
+        <div class="bubble b10"></div>
+      </div>
+
       <div class="ocean-glass-card wide">
         <!-- Header -->
         <h2 class="card-title">
@@ -90,8 +107,35 @@ import { AuthService } from '../../services/auth.service';
             </div>
           </div>
 
+          <!-- Naval Achievements & Medals (Theme 4: Virtual Identity) -->
+          <div class="dossier-divider"></div>
+          <div class="achievements-section">
+            <h3 class="achievements-heading">🎖️ EXPEDITION MEDALS & ACCOLADES</h3>
+            <p class="achievements-sub">Honors awarded by naval command for exceptional underwater feats</p>
+            <div class="achievements-grid">
+              <div 
+                *ngFor="let ach of achievements" 
+                class="achievement-card" 
+                [class.is-unlocked]="ach.unlocked"
+                [title]="ach.desc"
+              >
+                <div class="ach-badge-circle">
+                  <span>{{ ach.icon }}</span>
+                </div>
+                <div class="ach-text">
+                  <div class="ach-title">{{ ach.title }}</div>
+                  <div class="ach-desc">{{ ach.desc }}</div>
+                </div>
+                <span class="ach-tag" [class.tag-unlocked]="ach.unlocked">
+                  {{ ach.unlocked ? 'UNLOCKED ✨' : 'LOCKED 🔒' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+
           <!-- Action Buttons -->
-          <div class="btn-row" style="margin-top: 2rem;">
+          <div class="btn-row" style="margin-top: 0.6rem;">
             <button class="btn-pill btn-coral" (click)="openEditModal()">
               EDIT PROFILE
             </button>
@@ -174,27 +218,62 @@ import { AuthService } from '../../services/auth.service';
   `,
   styles: [`
     .dossier-icon {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
+    }
+
+    .profile-bg-layer {
+      position: fixed;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 0;
+      animation: profileBgDrift 24s ease-in-out infinite alternate;
+    }
+
+    @keyframes profileBgDrift {
+      0%   { transform: scale(1) translate(0, 0); }
+      100% { transform: scale(1.04) translate(-0.8%, 0.4%); }
+    }
+
+    /* Profile card: compact, full viewport fit */
+    .ocean-glass-card.wide {
+      position: relative;
+      z-index: 2;
+      max-height: 94vh !important;
+      overflow-y: auto !important;
+      padding: 1rem 1.5rem !important;
+      box-sizing: border-box !important;
+    }
+
+    .card-title {
+      font-size: 1.25rem !important;
+      margin-bottom: 0.1rem !important;
+    }
+
+    .card-subtitle {
+      font-size: 0.78rem !important;
+      margin-bottom: 0.5rem !important;
     }
 
     .profile-hero-portrait-wrap {
       display: flex;
       align-items: center;
-      gap: 1.1rem;
-      padding: 0.9rem 1.1rem;
+      gap: 0.85rem;
+      padding: 0.55rem 0.9rem;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid rgba(56, 189, 248, 0.3);
-      border-radius: 18px;
-      margin-bottom: 1.2rem;
+      border-radius: 14px;
+      margin-bottom: 0.65rem;
     }
 
     .hero-avatar-ring {
-      width: 68px;
-      height: 68px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       background: #021327;
-      border: 2.5px solid #38bdf8;
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -224,23 +303,23 @@ import { AuthService } from '../../services/auth.service';
     }
 
     .hero-callsign-title {
-      font-size: 1.35rem;
+      font-size: 1.1rem;
       font-weight: 800;
       color: #ffffff;
       margin: 0;
     }
 
     .dossier-content {
-      margin-top: 1rem;
+      margin-top: 0.4rem;
     }
 
     .class-badge {
       background: rgba(56, 189, 248, 0.25);
       border: 1px solid #38bdf8;
       color: #e0f2fe;
-      padding: 0.25rem 0.8rem;
+      padding: 0.18rem 0.65rem;
       border-radius: 9999px;
-      font-size: 0.95rem;
+      font-size: 0.82rem;
     }
 
     .location-val {
@@ -248,17 +327,17 @@ import { AuthService } from '../../services/auth.service';
     }
 
     .dossier-divider {
-      height: 1.5px;
-      background: rgba(255, 255, 255, 0.25);
-      margin: 1.4rem 0;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.2);
+      margin: 0.6rem 0;
     }
 
     .status-box {
-      padding: 2.5rem 1rem;
+      padding: 1.5rem 1rem;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1rem;
+      gap: 0.75rem;
       color: #c2e8fa;
     }
 
@@ -276,9 +355,9 @@ import { AuthService } from '../../services/auth.service';
     }
 
     .logout-link-wrap {
-      margin-top: 1.8rem;
+      margin-top: 0.65rem;
       text-align: center;
-      padding-top: 1.2rem;
+      padding-top: 0.6rem;
       border-top: 1px dashed rgba(255, 255, 255, 0.16);
     }
 
@@ -286,20 +365,20 @@ import { AuthService } from '../../services/auth.service';
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.55rem;
+      gap: 0.5rem;
       width: auto;
-      min-width: 180px;
-      padding: 0.65rem 1.6rem;
+      min-width: 150px;
+      padding: 0.42rem 1.2rem;
       background: rgba(239, 68, 68, 0.2);
       border: 1.5px solid rgba(239, 68, 68, 0.55);
       border-radius: 9999px;
       color: #fca5a5;
       font-family: inherit;
-      font-size: 0.88rem;
+      font-size: 0.82rem;
       font-weight: 700;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.6px;
       cursor: pointer;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -354,6 +433,7 @@ import { AuthService } from '../../services/auth.service';
   `]
 })
 export class ProfileComponent implements OnInit {
+  achievements: Achievement[] = [];
   profile: any = null;
   loading = true;
   saving = false;
@@ -376,6 +456,7 @@ export class ProfileComponent implements OnInit {
   constructor(
     private apiService: ApiService,
     public authService: AuthService,
+    private achievementService: AchievementService,
     private router: Router
   ) {}
 

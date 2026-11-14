@@ -80,6 +80,41 @@ import { MarineService } from '../../services/marine.service';
               >🌙 NIGHT</button>
             </div>
           </div>
+          <!-- Diver Suit Kit (Virtual Identity) -->
+          <div class="setting-row setting-row-stacked">
+            <span class="setting-label">🤿 PILOT DIVER KIT (SUIT CUSTOMIZATION)</span>
+            <div class="graphics-segmented-control kit-seg-control">
+              <button 
+                type="button"
+                class="segment-pill" 
+                [class.active]="diverSuit === 'classic'" 
+                (click)="setDiverSuit('classic')"
+                title="Standard Deep-Sea Navy Kit"
+              >🌊 NAVY</button>
+              <button 
+                type="button"
+                class="segment-pill kit-pill-coral" 
+                [class.active]="diverSuit === 'coral'" 
+                (click)="setDiverSuit('coral')"
+                title="Neon Coral Reef Explorer Kit"
+              >🪸 CORAL</button>
+              <button 
+                type="button"
+                class="segment-pill kit-pill-aqua" 
+                [class.active]="diverSuit === 'aqua'" 
+                (click)="setDiverSuit('aqua')"
+                title="Bio-Luminescent Cyan Abyssal Kit"
+              >⚡ CYAN</button>
+              <button 
+                type="button"
+                class="segment-pill kit-pill-gold" 
+                [class.active]="diverSuit === 'gold'" 
+                (click)="setDiverSuit('gold')"
+                title="Sunken Relic Golden Armor Kit"
+              >👑 GOLD</button>
+            </div>
+          </div>
+
 
           <!-- Graphics Selector -->
           <div class="setting-row">
@@ -332,6 +367,7 @@ export class SettingsModalComponent implements OnInit {
   graphicsQuality: 'low' | 'medium' | 'high' = 'medium';
   isFullscreen = false;
   solarCycle: 'auto' | 'day' | 'sunset' | 'night' = 'auto';
+  diverSuit: 'classic' | 'coral' | 'aqua' | 'gold' = (localStorage.getItem('oq_diver_suit') as any) || 'classic';
 
   constructor(
     private router: Router,
@@ -362,11 +398,23 @@ export class SettingsModalComponent implements OnInit {
 
     this.isFullscreen = !!document.fullscreenElement;
     this.solarCycle = this.marineService.solarMode;
+    const savedSuit = localStorage.getItem('oq_diver_suit') as any;
+    if (['classic', 'coral', 'aqua', 'gold'].includes(savedSuit)) {
+      this.diverSuit = savedSuit;
+    }
   }
 
   setSolarCycle(cycle: 'auto' | 'day' | 'sunset' | 'night'): void {
     this.solarCycle = cycle;
     this.marineService.setSolarMode(cycle);
+  }
+
+  setDiverSuit(suit: 'classic' | 'coral' | 'aqua' | 'gold'): void {
+    this.diverSuit = suit;
+    localStorage.setItem('oq_diver_suit', suit);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('diver-suit-changed', { detail: suit }));
+    }
   }
 
   setGraphics(q: 'low' | 'medium' | 'high'): void {

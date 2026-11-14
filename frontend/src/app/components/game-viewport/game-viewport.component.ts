@@ -1,6 +1,5 @@
 /**
- * Source/AI-generated: Ocean Quest Chronicles Project (see docs/references.md).
- * Scaffolded with an AI assistant and reviewed/edited by the author.
+ * Ocean Quest Chronicles — CIS045-3 Distributed Service Architectures * Core application architecture and component implementation.
  */
 import { Component, OnInit, OnDestroy, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -116,6 +115,45 @@ export class GameViewportComponent implements OnInit, OnDestroy {
     return this.currentAtmosphere === 'sunset';
   }
 
+  get diverSuit(): string {
+    return localStorage.getItem('oq_diver_suit') || 'classic';
+  }
+
+  get todayDateStr(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  get dailyChests(): number {
+    if (typeof localStorage === 'undefined') return 0;
+    const savedDate = localStorage.getItem('oq_daily_date');
+    if (savedDate !== this.todayDateStr) return 0;
+    return Math.min(3, parseInt(localStorage.getItem('oq_daily_chests') || '0', 10));
+  }
+
+  get dailyCompleted(): boolean {
+    return this.dailyChests >= 3;
+  }
+
+  recordDailyChest(): void {
+    if (typeof localStorage === 'undefined') return;
+    const today = this.todayDateStr;
+    const savedDate = localStorage.getItem('oq_daily_date');
+    let count = 0;
+    if (savedDate === today) {
+      count = parseInt(localStorage.getItem('oq_daily_chests') || '0', 10);
+    }
+    count = Math.min(3, count + 1);
+    localStorage.setItem('oq_daily_date', today);
+    localStorage.setItem('oq_daily_chests', String(count));
+
+    if (count === 3 && !localStorage.getItem('oq_daily_awarded_' + today)) {
+      localStorage.setItem('oq_daily_awarded_' + today, 'true');
+      this.gameEngine.addScore(500);
+      this.puzzleMessage = '✨ DAILY EXPEDITION COMPLETE! Recovered 3 Sunken Chests (+500 Bonus XP)!';
+    }
+  }
+
+
   get currentBgUrl(): SafeResourceUrl {
     if (this.gameState.level === 1) return this.level1BgUrl;
     if (this.gameState.level === 2) return this.level2BgUrl;
@@ -176,6 +214,10 @@ export class GameViewportComponent implements OnInit, OnDestroy {
         else if (p?.username) this.pilotCallsign = p.username;
         if (p?.profile?.city && p?.profile?.country) {
           this.pilotLocation = `${p.profile.city}, ${p.profile.country} 🇱🇰`;
+        }
+        if (p?.bestScore !== undefined) {
+          this.bestScore = p.bestScore || 0;
+          localStorage.setItem('ocean_quest_best_score', String(this.bestScore));
         }
       }
     });
@@ -521,6 +563,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
           this.soundService.speakNavalDispatch(`Cipher decrypted! Plus ${r.points} points.`);
           this.puzzleMessage = `🎉 Correct (${r.solution} fish)! Mystery Box unlocked (+${r.points} pts)!`;
           this.gameEngine.collectChest(r.points);
+          this.recordDailyChest();
           const chest = this.gameState.chests.find((item) => item.id === this.activeChestId);
           if (chest) chest.opened = true;
 
@@ -551,9 +594,11 @@ export class GameViewportComponent implements OnInit, OnDestroy {
 
             if (currentLevel === 1) {
               this.completedLevelNumber = 1;
+              this.saveFinalScore();
               this.isLevelComplete = true; // Level 1 Complete modal (unlocks Level 2)
             } else if (currentLevel === 2) {
               this.completedLevelNumber = 2;
+              this.saveFinalScore();
               this.isLevelComplete = true; // Level 2 Complete modal (unlocks Level 3)
             } else {
               this.handleVictory(); // Level 3 Complete (Full Game Victory!)
@@ -616,6 +661,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   }
 
   goToLevelMap(): void {
+    this.saveFinalScore();
     this.closeAllModals();
     this.closePuzzle();
     this.updateBackgroundAnimationState(false);
@@ -670,6 +716,10 @@ export class GameViewportComponent implements OnInit, OnDestroy {
     if (currentScore > oldLvlBest) {
       localStorage.setItem(lvlKey, String(currentScore));
     }
+    if (currentScore > this.bestScore) {
+      this.bestScore = currentScore;
+      localStorage.setItem('ocean_quest_best_score', String(this.bestScore));
+    }
 
     const exploration = Math.max(0, this.gameState.score - this.gameState.chestsCollected * 250);
     this.apiService.saveScore({
@@ -698,6 +748,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   }
 
   goToMainMenu(): void {
+    this.saveFinalScore();
     this.closeAllModals();
     this.closePuzzle();
     this.updateBackgroundAnimationState(false);
@@ -706,6 +757,7 @@ export class GameViewportComponent implements OnInit, OnDestroy {
   }
 
   goToLeaderboard(): void {
+    this.saveFinalScore();
     this.closeAllModals();
     this.closePuzzle();
     this.updateBackgroundAnimationState(false);
